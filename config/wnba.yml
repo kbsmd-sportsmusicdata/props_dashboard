@@ -1,0 +1,11 @@
+{
+  "league": "WNBA",
+  "season": 2026,
+  "timezone": "America/Los_Angeles",
+  "refresh_hour_local": 20,
+  "stats": ["points", "rebounds", "assists", "PRA"],
+  "rolling_windows": [3, 5, 10, 20],
+  "minimum_minutes_for_percentiles": 10,
+  "dashboard_player_limit": 50,
+  "dashboard_recent_games": 15
+}

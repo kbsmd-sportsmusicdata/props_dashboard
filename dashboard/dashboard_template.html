@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WBB Player Props Dashboard - v2</title>
+    <style id="dynamicTheme"></style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #ffffff; min-height: 100vh; }
+        .container { width: 100%; margin: 0 auto; max-width: 80rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .p-3 { padding: 0.75rem; } .p-4 { padding: 1rem; } .p-5 { padding: 1.25rem; }
+        .pt-4 { padding-top: 1rem; } .pb-8 { padding-bottom: 2rem; }
+        .mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}
+        .mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mt-8{margin-top:2rem}
+        .ml-2{margin-left:.5rem} .mr-2{margin-right:.5rem}
+        .gap-1{gap:.25rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}
+        .space-y-2>*+*{margin-top:.5rem}.space-y-3>*+*{margin-top:.75rem}.space-y-6>*+*{margin-top:1.5rem}
+        .flex{display:flex}.grid{display:grid}.hidden{display:none}.block{display:block}
+        .flex-1{flex:1 1 0%}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}
+        .items-start{align-items:flex-start}.items-center{align-items:center}.items-end{align-items:flex-end}
+        .justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-around{justify-content:space-around}
+        .text-center{text-align:center}
+        .text-xs{font-size:.75rem;line-height:1rem}.text-sm{font-size:.875rem;line-height:1.25rem}
+        .text-lg{font-size:1.125rem;line-height:1.75rem}.text-xl{font-size:1.25rem;line-height:1.75rem}
+        .text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}
+        .font-medium{font-weight:500}.font-semibold{font-weight:600}.font-bold{font-weight:700}
+        .rounded{border-radius:.25rem}.rounded-md{border-radius:.375rem}.rounded-lg{border-radius:.5rem}
+        .rounded-xl{border-radius:.75rem}.rounded-full{border-radius:9999px}
+        .rounded-t-md{border-top-left-radius:.375rem;border-top-right-radius:.375rem}
+        .border{border-width:1px;border-style:solid}.border-t{border-top-width:1px;border-top-style:solid}
+        .border-b{border-bottom-width:1px;border-bottom-style:solid}.border-l-4{border-left-width:4px;border-left-style:solid}
+        .border-t-2{border-top-width:2px;border-top-style:solid}.border-2{border-width:2px;border-style:solid}
+        .border-dashed{border-style:dashed}
+        .overflow-hidden{overflow:hidden}.relative{position:relative}.absolute{position:absolute}
+        .left-0{left:0}.right-0{right:0}
+        .w-3{width:.75rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.w-7{width:1.75rem}.w-10{width:2.5rem}
+        .w-12{width:3rem}.w-16{width:4rem}.w-20{width:5rem}.w-full{width:100%}
+        .h-2{height:.5rem}.h-3{height:.75rem}.h-6{height:1.5rem}.h-10{height:2.5rem}.h-12{height:3rem}
+        .h-16{height:4rem}.h-20{height:5rem}.h-64{height:16rem}.h-full{height:100%}.h-screen{height:100vh}
+        .min-h-screen{min-height:100vh}.max-w-7xl{max-width:80rem}.z-10{z-index:10}
+        .appearance-none{appearance:none}.cursor-pointer{cursor:pointer}
+        .-top-5{top:-1.25rem}.left-1_2{left:50%}
+        .object-cover{object-fit:cover}
+        .pr-6{padding-right:1.5rem}.pr-8{padding-right:2rem}
+        .py-1{padding-top:.25rem;padding-bottom:.25rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}
+        .py-3{padding-top:.75rem;padding-bottom:.75rem}.py-8{padding-top:2rem;padding-bottom:2rem}
+        .px-2{padding-left:.5rem;padding-right:.5rem}.px-3{padding-left:.75rem;padding-right:.75rem}
+        .bg-dashboard-bg{background-color:#0f172a}.bg-card-bg{background-color:#1e293b}
+        .bg-card-border{background-color:#334155}.bg-accent{background-color:#3b82f6}
+        .bg-over{background-color:#22c55e}.bg-under{background-color:#ef4444}.bg-transparent{background-color:transparent}
+        .text-white{color:#ffffff}.text-gray-400{color:#9ca3af}.text-gray-500{color:#6b7280}.text-gray-600{color:#4b5563}
+        .text-accent{color:#3b82f6}.text-over{color:#22c55e}.text-under{color:#ef4444}
+        .text-yellow-500{color:#eab308}.text-blue-400{color:#60a5fa}.text-orange-400{color:#fb923c}.text-purple-400{color:#c084fc}
+        .border-card-border{border-color:#334155}.border-over{border-color:#22c55e}.border-under{border-color:#ef4444}
+        .border-gray-500{border-color:#6b7280}.border-transparent{border-color:transparent}
+        .bg-over-10{background-color:rgba(34,197,94,.1)}.bg-over-20{background-color:rgba(34,197,94,.2)}
+        .bg-under-10{background-color:rgba(239,68,68,.1)}.bg-under-20{background-color:rgba(239,68,68,.2)}
+        .bg-accent-20{background-color:rgba(59,130,246,.2)}.bg-blue-500-20{background-color:rgba(59,130,246,.2)}
+        .bg-purple-500-20{background-color:rgba(168,85,247,.15)}
+        .bg-yellow-500-10{background-color:rgba(234,179,8,.1)}.bg-yellow-500-20{background-color:rgba(234,179,8,.2)}
+        .bg-yellow-900-20{background-color:rgba(113,63,18,.2)}.bg-orange-500-20{background-color:rgba(249,115,22,.2)}
+        .border-over-30{border-color:rgba(34,197,94,.3)}.border-over-50{border-color:rgba(34,197,94,.5)}
+        .border-under-30{border-color:rgba(239,68,68,.3)}.border-under-50{border-color:rgba(239,68,68,.5)}
+        .border-yellow-500-30{border-color:rgba(234,179,8,.3)}.border-yellow-600-30{border-color:rgba(202,138,4,.3)}
+        .grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+        .grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+        @media (min-width:768px){.md-grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md-grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.md-w-7{width:1.75rem}}
+        @media (min-width:1024px){.lg-col-span-2{grid-column:span 2/span 2}.lg-grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+        /* Component-specific styles */
+        .bar-over { background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%); }
+        .bar-under { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
+        .stat-toggle.active { background: #3b82f6; color: white; }
+        .stat-toggle:not(.active) { background: #334155; color: #94a3b8; }
+        input[type="range"] { -webkit-appearance: none; appearance: none; background: #334155; border-radius: 5px; height: 8px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #3b82f6; border-radius: 50%; cursor: pointer; }
+        input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; background: #3b82f6; border-radius: 50%; cursor: pointer; border: none; }
+        .prob-bar, .pctl-bar, .tri-bar { transition: width 0.3s ease; }
+        select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em;
+            background-color: #0f172a; border: 1px solid #334155; color: white; }
+        .tab-btn.active { background: #3b82f6; color: white; }
+        .tab-btn:not(.active) { background: transparent; color: #9ca3af; }
+        .metric-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .avatar-img { width: 64px; height: 64px; border-radius: 9999px; object-fit: cover; border: 2px solid #334155; background: #1e293b; }
+        .avatar-fallback { width: 64px; height: 64px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; }
+        .tab-btn-sm { font-size: 0.75rem; padding: 0.5rem 0.25rem; }
+        .bench-tab.active { background: #3b82f6; color: white; }
+        .bench-tab:not(.active) { background: #334155; color: #94a3b8; }
+        .bench-tab { border: none; cursor: pointer; }
+        /* Quartile box plot */
+        .qbox-track { position: relative; height: 34px; background: #0f172a; border-radius: 6px; }
+        .qbox-whisker { position: absolute; top: 50%; height: 2px; background: #64748b; transform: translateY(-50%); }
+        .qbox-box { position: absolute; top: 6px; bottom: 6px; border-radius: 3px; opacity: 0.85; }
+        .qbox-median { position: absolute; top: 4px; bottom: 4px; width: 3px; background: #fff; }
+        .qbox-cap { position: absolute; top: 10px; bottom: 10px; width: 2px; background: #64748b; }
+        .qbox-line { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed #eab308; z-index: 5; }
+        .bench-row:hover { background: rgba(59,130,246,.08); }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" id="headerIcon" style="background:#3b82f6;">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold">WNBA Props Dashboard <span class="text-accent text-sm font-medium">v1</span></h1>
+                    <p class="text-sm text-gray-400">WNBA • ESPN data via SportsDataverse</p>
+                </div>
+            </div>
+            <div class="text-sm text-gray-400">Updated from completed WNBA games</div>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="bg-card-bg rounded-xl p-4 mb-6 border border-card-border">
+            <div class="grid grid-cols-1 md-grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Player</label>
+                    <select id="playerSelect" class="w-full rounded-lg px-3 py-2 appearance-none pr-8 text-sm"></select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Stat</label>
+                    <div class="flex gap-1">
+                        <button class="stat-toggle active flex-1 px-3 py-2 rounded-lg text-sm font-medium" data-stat="points">PTS</button>
+                        <button class="stat-toggle flex-1 px-3 py-2 rounded-lg text-sm font-medium" data-stat="rebounds">REB</button>
+                        <button class="stat-toggle flex-1 px-3 py-2 rounded-lg text-sm font-medium" data-stat="assists">AST</button>
+                        <button class="stat-toggle flex-1 px-3 py-2 rounded-lg text-sm font-medium" data-stat="PRA">PRA</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Prop Line: <span id="lineValue" class="text-white font-semibold">18.5</span></label>
+                    <input type="range" id="lineSlider" min="2" max="45" step="0.5" value="18.5" class="w-full">
+                    <div class="mt-1 flex items-center gap-2 text-xs">
+                        <span class="text-gray-500">Suggested:</span>
+                        <button id="suggestedLineBtn" class="px-2 py-1 rounded font-semibold cursor-pointer" style="background:rgba(59,130,246,.2);color:#60a5fa;border:none;">-</button>
+                        <span id="suggestedConf" class="text-gray-500"></span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Opponent</label>
+                    <select id="opponentSelect" class="w-full rounded-lg px-3 py-2 appearance-none pr-8 text-sm"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg-grid-cols-3 gap-6">
+            <!-- Left Column -->
+            <div class="space-y-6">
+                <!-- Player Card with Tabs -->
+                <div class="bg-card-bg rounded-xl border border-card-border overflow-hidden">
+                    <!-- Tab Navigation -->
+                    <div class="flex border-b border-card-border">
+                        <button class="tab-btn active flex-1 tab-btn-sm font-medium" data-tab="overview">Overview</button>
+                        <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="advanced">Advanced</button>
+                        <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="ranges">Ranges</button>
+                        <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="position">Position</button>
+                        <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="splits">Splits</button>
+                        <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="matchup">Matchup</button>
+                    </div>
+
+                    <!-- Tab: Overview -->
+                    <div id="tab-overview" class="tab-content p-5">
+                        <div class="flex items-start gap-4 mb-4">
+                            <div class="relative">
+                                <img id="playerHeadshot" class="avatar-img" style="display:none;" alt="">
+                                <div id="playerAvatarFallback" class="avatar-fallback"></div>
+                            </div>
+                            <div class="flex-1">
+                                <h2 class="text-xl font-bold" id="playerName">-</h2>
+                                <p class="text-gray-400" id="playerTeam">-</p>
+                                <p class="text-sm text-gray-500" id="playerGames">-</p>
+                                <span class="inline-block mt-1 px-2 py-1 rounded text-xs font-semibold" id="positionBadge" style="background:rgba(59,130,246,.2);color:#60a5fa;">GUARD</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-4 gap-3 mb-4">
+                            <div class="text-center"><div class="text-2xl font-bold" id="statPts" style="color:#3b82f6;">-</div><div class="text-xs text-gray-400">PPG</div></div>
+                            <div class="text-center"><div class="text-2xl font-bold" id="statReb">-</div><div class="text-xs text-gray-400">RPG</div></div>
+                            <div class="text-center"><div class="text-2xl font-bold" id="statAst">-</div><div class="text-xs text-gray-400">APG</div></div>
+                            <div class="text-center"><div class="text-2xl font-bold" id="statPra">-</div><div class="text-xs text-gray-400">PRA</div></div>
+                        </div>
+
+                        <div class="bg-dashboard-bg rounded-lg p-3 mb-4" id="streakBox">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-400">Current Streak:</span>
+                                <span class="font-bold text-lg" id="streakValue">-</span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-card-border pt-4">
+                            <h3 class="text-sm font-semibold text-gray-400 mb-3">HIT RATES vs <span id="lineDisplay">18.5</span></h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Season:</span><span class="font-semibold" id="hitSeason">-</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">L5:</span><span class="font-semibold" id="hitL5">-</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">L10:</span><span class="font-semibold" id="hitL10">-</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Home:</span><span class="font-semibold" id="hitHome">-</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Away:</span><span class="font-semibold" id="hitAway">-</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Conf:</span><span class="font-semibold" id="hitConf">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Advanced Metrics -->
+                    <div id="tab-advanced" class="tab-content p-5 hidden">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-4">ADVANCED METRICS</h3>
+                        <div class="metric-card rounded-lg p-4 mb-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-400">Tournament Readiness</span>
+                                <span class="text-2xl font-bold" id="tournamentReadiness">-</span>
+                            </div>
+                            <div class="h-2 bg-card-border rounded-full overflow-hidden">
+                                <div class="h-full tri-bar" id="triBar" style="width:0%;background:linear-gradient(90deg,#ef4444,#eab308,#22c55e);"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Index combining consistency, efficiency & recent form</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-dashboard-bg rounded-lg p-3"><div class="text-xs text-gray-500">Game Score</div><div class="text-lg font-bold" id="gameScore">-</div><div class="text-xs text-gray-500" id="gameScoreTrend">-</div></div>
+                            <div class="bg-dashboard-bg rounded-lg p-3"><div class="text-xs text-gray-500">Consistency (L10)</div><div class="text-lg font-bold" id="consistency">-</div></div>
+                            <div class="bg-dashboard-bg rounded-lg p-3"><div class="text-xs text-gray-500">True Shooting %</div><div class="text-lg font-bold" id="tsPct">-</div></div>
+                            <div class="bg-dashboard-bg rounded-lg p-3"><div class="text-xs text-gray-500">Usage Rate</div><div class="text-lg font-bold" id="usage">-</div></div>
+                            <div class="bg-dashboard-bg rounded-lg p-3"><div class="text-xs text-gray-500">AST/TOV</div><div class="text-lg font-bold" id="astTov">-</div></div>
+                            <div class="bg-dashboard-bg rounded-lg p-3"><div class="text-xs text-gray-500">Win Rate</div><div class="text-lg font-bold" id="winRate">-</div></div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-card-border">
+                            <div class="flex justify-between text-sm mb-2"><span class="text-gray-400">Scoring Profile:</span><span class="font-medium" id="scoringProfile">-</span></div>
+                            <div class="flex justify-between text-sm"><span class="text-gray-400">Defense Profile:</span><span class="font-medium" id="defenseProfile">-</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Quartile Ranges -->
+                    <div id="tab-ranges" class="tab-content p-5 hidden">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-1">QUARTILE RANGES — <span id="rangesStatLabel">POINTS</span></h3>
+                        <p class="text-xs text-gray-500 mb-4">Box = Q1–Q3 (middle 50%); line = median; whiskers = min/max. Dashed marker = current prop line (<span id="rangesLineVal">18.5</span>).</p>
+                        <div id="quartileBoxes" class="space-y-5"></div>
+                        <div class="mt-4 pt-4 border-t border-card-border">
+                            <p class="text-xs text-gray-500" id="rangesInsight">-</p>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Position Trends -->
+                    <div id="tab-position" class="tab-content p-5 hidden">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-1">POSITION-RELATIVE TRENDS</h3>
+                        <p class="text-xs text-gray-500 mb-4">Ranked vs <span id="posGroupCount">-</span> Top-25 <span id="posGroupName">Guards</span></p>
+
+                        <div class="space-y-4" id="positionPctlBars"></div>
+
+                        <div class="mt-5 pt-4 border-t border-card-border">
+                            <h4 class="text-xs font-semibold text-gray-500 mb-3">VS POSITION AVERAGE</h4>
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-gray-500 text-xs">
+                                        <td class="pb-2">Stat</td><td class="pb-2 text-center">Player</td><td class="pb-2 text-center">Pos Avg</td><td class="pb-2 text-center">Diff</td>
+                                    </tr>
+                                </thead>
+                                <tbody id="posCompareTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Starter/Bench Splits -->
+                    <div id="tab-splits" class="tab-content p-5 hidden">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-4">STARTER vs BENCH SPLITS</h3>
+                        <div id="splitsContent"></div>
+                    </div>
+
+                    <!-- Tab: Matchup History -->
+                    <div id="tab-matchup" class="tab-content p-5 hidden">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-4">vs <span id="matchupOppName">OPPONENT</span></h3>
+                        <div id="matchupContent">
+                            <div id="matchupStats" class="space-y-3"></div>
+                            <div id="noMatchupHistory" class="text-center py-8 text-gray-500 hidden"><p>No previous matchup history</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Probability Models -->
+                <div class="bg-card-bg rounded-xl p-5 border border-card-border">
+                    <h3 class="text-sm font-semibold text-gray-400 mb-4">PROBABILITY MODELS</h3>
+                    <div class="space-y-3">
+                        <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-400">Empirical</span><span class="font-medium" id="probEmpirical">-</span></div><div class="h-2 bg-dashboard-bg rounded-full overflow-hidden"><div class="prob-bar h-full bg-over rounded-full" id="probEmpiricalBar" style="width:50%"></div></div></div>
+                        <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-400">Poisson</span><span class="font-medium" id="probPoisson">-</span></div><div class="h-2 bg-dashboard-bg rounded-full overflow-hidden"><div class="prob-bar h-full bg-over rounded-full" id="probPoissonBar" style="width:50%"></div></div></div>
+                        <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-400">Normal</span><span class="font-medium" id="probNormal">-</span></div><div class="h-2 bg-dashboard-bg rounded-full overflow-hidden"><div class="prob-bar h-full bg-over rounded-full" id="probNormalBar" style="width:50%"></div></div></div>
+                        <div class="bg-dashboard-bg rounded-lg p-3 mt-4">
+                            <div class="flex justify-between items-center mb-2"><span class="font-semibold">ENSEMBLE</span><span class="text-2xl font-bold" id="probEnsemble">-</span></div>
+                            <div class="h-3 bg-card-border rounded-full overflow-hidden"><div class="prob-bar h-full rounded-full" id="probEnsembleBar" style="width:50%;background:linear-gradient(90deg,#22c55e,#4ade80);"></div></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-card-border">
+                        <div class="flex justify-between items-center">
+                            <div><span class="text-gray-400 text-sm">Edge:</span><span class="ml-2 px-2 py-1 rounded text-sm font-semibold" id="edgeDirection">-</span></div>
+                            <div><span class="text-gray-400 text-sm">Implied:</span><span class="ml-2 text-sm font-medium" id="impliedOdds">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Column -->
+            <div class="lg-col-span-2 space-y-6">
+                <!-- Game Log -->
+                <div class="bg-card-bg rounded-xl p-5 border border-card-border">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-semibold text-gray-400">GAME LOG - <span id="chartStat">POINTS</span></h3>
+                        <select id="gameTypeFilter" class="rounded px-2 py-1 text-sm appearance-none pr-6">
+                            <option value="all">All Games</option>
+                            <option value="conf">Commissioner's Cup</option>
+                            <option value="nonconf">Other Games</option>
+                        </select>
+                    </div>
+                    <div class="relative h-64">
+                        <div class="absolute left-0 right-0 border-t-2 border-dashed border-gray-500 z-10" id="refLine" style="bottom:46%;"></div>
+                        <div class="absolute right-0 text-xs text-gray-400 z-10" id="refLineLabel" style="bottom:44%;">18.5</div>
+                        <div class="flex items-end justify-around h-full pt-4 pb-8" id="barsContainer"></div>
+                    </div>
+                    <div class="flex justify-center gap-6 mt-2 text-sm flex-wrap">
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-over"></div><span class="text-gray-400">Over</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-under"></div><span class="text-gray-400">Under</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-accent"></div><span class="text-gray-400">Commissioner's Cup</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded" style="border:2px solid #c084fc;"></div><span class="text-gray-400">Started</span></div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="grid grid-cols-1 md-grid-cols-2 gap-6">
+                    <div class="bg-card-bg rounded-xl p-5 border border-card-border">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-4">OPPONENT DEFENSE</h3>
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 rounded-lg flex items-center justify-center text-lg font-bold" id="oppLogo" style="background:rgba(59,130,246,.2);">-</div>
+                            <div><div class="font-semibold" id="oppName">-</div><div class="text-sm text-gray-400">Defense percentile <span id="netRank">-</span></div></div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Defense Tier:</span><span class="px-2 py-1 rounded text-sm font-semibold" id="defTier">-</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Pts Allowed:</span><span class="font-medium" id="ptsAllowed">-</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Opp <span id="oppStatLabel">Pts</span>:</span><span class="font-medium" id="oppPlayerStat">-</span></div>
+                        </div>
+                        <div class="mt-4 p-3 rounded-lg hidden" id="matchupWarning"></div>
+                    </div>
+
+                    <div class="bg-card-bg rounded-xl p-5 border border-card-border">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-4">FINAL ANALYSIS</h3>
+                        <div class="space-y-2 mb-4" id="analysisList"></div>
+                        <div class="p-4 rounded-lg" id="recommendation">
+                            <div class="text-center">
+                                <div class="text-sm text-gray-400 mb-1">RECOMMENDATION</div>
+                                <div class="text-2xl font-bold" id="recDirection">-</div>
+                                <div class="text-sm text-gray-400 mt-1" id="recDetails">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rolling Averages -->
+                <div class="bg-card-bg rounded-xl p-5 border border-card-border">
+                    <h3 class="text-sm font-semibold text-gray-400 mb-4">ROLLING AVERAGES & TREND</h3>
+                    <div class="grid grid-cols-5 gap-4 text-center">
+                        <div><div class="text-xs text-gray-500 mb-1">L3</div><div class="text-xl font-bold" id="avgL3">-</div></div>
+                        <div><div class="text-xs text-gray-500 mb-1">L5</div><div class="text-xl font-bold" id="avgL5">-</div></div>
+                        <div><div class="text-xs text-gray-500 mb-1">L10</div><div class="text-xl font-bold" id="avgL10">-</div></div>
+                        <div><div class="text-xs text-gray-500 mb-1">Season</div><div class="text-xl font-bold" id="avgSeason">-</div></div>
+                        <div><div class="text-xs text-gray-500 mb-1">Trend</div><div class="text-xl font-bold" id="trendIndicator">-</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bench Production Leaderboard -->
+        <div class="bg-card-bg rounded-xl border border-card-border overflow-hidden mt-6">
+            <div class="flex items-center justify-between p-5 pb-0 flex-wrap gap-2">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-400">BENCH PRODUCTION LEADERBOARD</h3>
+                    <p class="text-xs text-gray-500">WNBA reserves • minimum-sample safeguards</p>
+                </div>
+                <div class="flex gap-1" id="benchTabs">
+                    <button class="bench-tab active px-3 py-1 rounded text-xs font-medium" data-bench="scoring">Instant Offense</button>
+                    <button class="bench-tab px-3 py-1 rounded text-xs font-medium" data-bench="efficiency">Efficiency (P/36)</button>
+                    <button class="bench-tab px-3 py-1 rounded text-xs font-medium" data-bench="spark">Spark Plugs</button>
+                </div>
+            </div>
+            <div class="p-5" id="benchLeaderboardContent"></div>
+        </div>
+
+        <div class="mt-8 text-center text-sm text-gray-500">
+            <p>Data sourced from ESPN via SportsDataverse/wehoop • For analytical purposes only</p>
+        </div>
+    </div>
+
+    <script>
+        let DATA = null;
+        let currentStat = 'points';
+        let currentLine = 18.5;
+        let currentPlayerId = null;
+        let currentOpponent = null;
+        let gameTypeFilter = 'all';
+
+        const POSITION_LABELS = { 'Guard': 'Guards', 'Forward': 'Forwards', 'Center': 'Centers', 'Unknown': 'Players' };
+
+        async function loadData() {
+            DATA = /*__DASHBOARD_DATA__*/;
+            init();
+        }
+
+        function init() {
+            populateDropdowns();
+            currentPlayerId = DATA.players[0].id;
+            currentOpponent = DATA.teams[0];
+            loadPlayer(currentPlayerId);
+            updateOpponentPanel();
+            renderBenchLeaderboard();
+            setupEventListeners();
+        }
+
+        function populateDropdowns() {
+            const playerSelect = document.getElementById('playerSelect');
+            DATA.players.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.name} (${p.abbrev}) - ${p.ppg} PPG`;
+                playerSelect.appendChild(opt);
+            });
+            const opponentSelect = document.getElementById('opponentSelect');
+            DATA.teams.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                opponentSelect.appendChild(opt);
+            });
+        }
+
+        function applyTeamTheme(color, altColor) {
+            const styleEl = document.getElementById('dynamicTheme');
+            const c = '#' + (color || '3b82f6');
+            const a = '#' + (altColor || '1e293b');
+            styleEl.textContent = `
+                .stat-toggle.active { background: ${c} !important; }
+                .tab-btn.active { background: ${c} !important; }
+                input[type="range"]::-webkit-slider-thumb { background: ${c} !important; }
+                input[type="range"]::-moz-range-thumb { background: ${c} !important; }
+                #headerIcon { background: ${c} !important; }
+                #statPts { color: ${c} !important; }
+                .avatar-fallback { background: linear-gradient(135deg, ${c} 0%, ${a} 100%) !important; }
+                #playerHeadshot { border-color: ${c} !important; }
+            `;
+        }
+
+        function lightenColor(hex) {
+            let r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
+            r = Math.min(255, r+40); g = Math.min(255, g+40); b = Math.min(255, b+40);
+            return r.toString(16).padStart(2,'0') + g.toString(16).padStart(2,'0') + b.toString(16).padStart(2,'0');
+        }
+
+        function loadPlayer(playerId) {
+            const playerData = DATA.player_data[playerId];
+            if (!playerData) return;
+            currentPlayerId = playerId;
+            const info = playerData.info;
+            const meta = playerData.meta || {};
+
+            document.getElementById('playerName').textContent = info.name;
+            document.getElementById('playerTeam').textContent = info.team;
+            document.getElementById('playerGames').textContent = `${info.games} games played`;
+            document.getElementById('statPts').textContent = info.ppg;
+            document.getElementById('statReb').textContent = info.rpg;
+            document.getElementById('statAst').textContent = info.apg;
+            document.getElementById('statPra').textContent = info.pra;
+
+            // Position badge
+            const posBadge = document.getElementById('positionBadge');
+            posBadge.textContent = (meta.position_name || 'Guard').toUpperCase();
+
+            // Team color theming
+            applyTeamTheme(meta.team_color, meta.team_alt_color);
+
+            // Headshot with fallback
+            const initials = info.name.split(' ').map(n => n[0]).join('').slice(0,2);
+            const img = document.getElementById('playerHeadshot');
+            const fallback = document.getElementById('playerAvatarFallback');
+            fallback.textContent = initials;
+            if (meta.headshot) {
+                img.src = meta.headshot;
+                img.style.display = 'block';
+                fallback.style.display = 'none';
+                img.onerror = () => { img.style.display = 'none'; fallback.style.display = 'flex'; };
+            } else {
+                img.style.display = 'none';
+                fallback.style.display = 'flex';
+            }
+
+            updateAdvancedMetrics(playerData.advanced);
+            updatePositionTab(playerData);
+            updateSplitsTab(playerData);
+            renderBars();
+            updateProbabilities();
+            updateMatchupHistory();
+            renderQuartiles();
+            updateSuggestedLine();
+        }
+
+        function updateAdvancedMetrics(adv) {
+            if (!adv) return;
+            const tri = adv.tournament_readiness || 0;
+            document.getElementById('tournamentReadiness').textContent = tri.toFixed(1);
+            document.getElementById('tournamentReadiness').className = `text-2xl font-bold ${tri>=60?'text-over':tri>=40?'text-yellow-500':'text-under'}`;
+            document.getElementById('triBar').style.width = `${tri}%`;
+
+            document.getElementById('gameScore').textContent = adv.game_score != null ? adv.game_score.toFixed(1) : '-';
+            document.getElementById('gameScoreTrend').textContent = adv.game_score_l5 != null ? `L5: ${adv.game_score_l5.toFixed(1)}` : '';
+            document.getElementById('consistency').textContent = adv.consistency_l10 != null ? `${adv.consistency_l10.toFixed(0)}%` : '-';
+            document.getElementById('tsPct').textContent = adv.ts_pct != null ? `${adv.ts_pct.toFixed(1)}%` : '-';
+            document.getElementById('usage').textContent = adv.usage != null ? `${adv.usage.toFixed(1)}%` : '-';
+            document.getElementById('astTov').textContent = adv.ast_to_tov != null ? adv.ast_to_tov.toFixed(2) : '-';
+            document.getElementById('winRate').textContent = adv.win_rate != null ? `${adv.win_rate.toFixed(0)}%` : '-';
+            document.getElementById('scoringProfile').textContent = adv.scoring_profile || '-';
+            document.getElementById('defenseProfile').textContent = adv.defensive_profile || '-';
+        }
+
+        function updatePositionTab(playerData) {
+            const meta = playerData.meta || {};
+            const pctl = playerData.position_pctl || {};
+            const posGroup = meta.position_group || 'Guard';
+            const bench = DATA.position_benchmarks[posGroup] || {};
+            const info = playerData.info;
+
+            document.getElementById('posGroupName').textContent = POSITION_LABELS[posGroup] || posGroup;
+            document.getElementById('posGroupCount').textContent = bench.n_players || '-';
+
+            const stats = [
+                { label: 'Points', pctl: pctl.pts_pctl, player: info.ppg, avg: bench.avg_ppg },
+                { label: 'Rebounds', pctl: pctl.reb_pctl, player: info.rpg, avg: bench.avg_rpg },
+                { label: 'Assists', pctl: pctl.ast_pctl, player: info.apg, avg: bench.avg_apg },
+                { label: 'PRA', pctl: pctl.pra_pctl, player: info.pra, avg: bench.avg_pra }
+            ];
+
+            const barsContainer = document.getElementById('positionPctlBars');
+            barsContainer.innerHTML = stats.map(s => {
+                const p = s.pctl != null ? s.pctl : 50;
+                const color = p >= 75 ? '#22c55e' : p >= 40 ? '#eab308' : '#ef4444';
+                return `<div>
+                    <div class="flex justify-between text-sm mb-1"><span class="text-gray-400">${s.label}</span><span class="font-semibold" style="color:${color}">${p.toFixed(0)}th percentile</span></div>
+                    <div class="h-2 bg-dashboard-bg rounded-full overflow-hidden"><div class="h-full pctl-bar rounded-full" style="width:${p}%;background:${color};"></div></div>
+                </div>`;
+            }).join('');
+
+            const compareRows = stats.map(s => {
+                const diff = s.player - (s.avg || 0);
+                const diffColor = diff >= 0 ? '#22c55e' : '#ef4444';
+                const diffStr = diff >= 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1);
+                return `<tr class="border-t border-card-border">
+                    <td class="py-2 text-gray-400">${s.label}</td>
+                    <td class="py-2 text-center font-semibold">${s.player}</td>
+                    <td class="py-2 text-center text-gray-400">${(s.avg||0).toFixed(1)}</td>
+                    <td class="py-2 text-center font-semibold" style="color:${diffColor}">${diffStr}</td>
+                </tr>`;
+            }).join('');
+            document.getElementById('posCompareTable').innerHTML = compareRows;
+        }
+
+        function updateSplitsTab(playerData) {
+            const splits = playerData.starter_splits || {};
+            const starter = splits.as_starter;
+            const bench = splits.as_bench;
+            const container = document.getElementById('splitsContent');
+
+            function roleCard(label, data, color) {
+                if (!data) {
+                    return `<div class="bg-dashboard-bg rounded-lg p-4 text-center text-gray-500 text-sm">No ${label.toLowerCase()} games recorded</div>`;
+                }
+                return `<div class="bg-dashboard-bg rounded-lg p-4" style="border-left:3px solid ${color};">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-semibold" style="color:${color}">${label}</span>
+                        <span class="text-xs text-gray-500">${data.games} games</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div><div class="text-lg font-bold">${data.pts_avg}</div><div class="text-xs text-gray-500">PTS</div></div>
+                        <div><div class="text-lg font-bold">${data.reb_avg}</div><div class="text-xs text-gray-500">REB</div></div>
+                        <div><div class="text-lg font-bold">${data.ast_avg}</div><div class="text-xs text-gray-500">AST</div></div>
+                        <div><div class="text-lg font-bold">${data.min_avg}</div><div class="text-xs text-gray-500">MIN</div></div>
+                    </div>
+                </div>`;
+            }
+
+            let html = `<div class="space-y-3">${roleCard('As Starter', starter, '#c084fc')}${roleCard('As Bench', bench, '#60a5fa')}</div>`;
+
+            if (starter && bench) {
+                const ptsDiff = starter.pts_avg - bench.pts_avg;
+                html += `<div class="mt-4 pt-4 border-t border-card-border text-sm text-gray-400 text-center">
+                    Scores <span class="font-semibold ${ptsDiff >= 0 ? 'text-over' : 'text-under'}">${Math.abs(ptsDiff).toFixed(1)} pts ${ptsDiff >= 0 ? 'more' : 'less'}</span> as a starter
+                </div>`;
+            } else if (starter && !bench) {
+                html += `<div class="mt-4 pt-4 border-t border-card-border text-sm text-gray-500 text-center">Started 100% of games played (${starter.games}/${starter.games})</div>`;
+            } else if (bench && !starter) {
+                html += `<div class="mt-4 pt-4 border-t border-card-border text-sm text-gray-500 text-center">Came off the bench in 100% of games played</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function updateMatchupHistory() {
+            const playerData = DATA.player_data[currentPlayerId];
+            if (!playerData) return;
+            document.getElementById('matchupOppName').textContent = currentOpponent.name;
+            const matchup = playerData.matchups[currentOpponent.id];
+            const statsDiv = document.getElementById('matchupStats');
+            const noHistory = document.getElementById('noMatchupHistory');
+
+            if (matchup && matchup.games > 0) {
+                noHistory.classList.add('hidden');
+                statsDiv.classList.remove('hidden');
+                statsDiv.innerHTML = `
+                    <div class="bg-dashboard-bg rounded-lg p-4 text-center mb-4">
+                        <div class="text-3xl font-bold">${matchup.games}</div>
+                        <div class="text-xs text-gray-500">Games vs ${currentOpponent.abbrev}</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-dashboard-bg rounded-lg p-3 text-center"><div class="text-lg font-bold">${matchup.pts_avg}</div><div class="text-xs text-gray-500">PPG vs</div></div>
+                        <div class="bg-dashboard-bg rounded-lg p-3 text-center"><div class="text-lg font-bold">${matchup.reb_avg}</div><div class="text-xs text-gray-500">RPG vs</div></div>
+                        <div class="bg-dashboard-bg rounded-lg p-3 text-center"><div class="text-lg font-bold">${matchup.ast_avg}</div><div class="text-xs text-gray-500">APG vs</div></div>
+                        <div class="bg-dashboard-bg rounded-lg p-3 text-center"><div class="text-lg font-bold">${matchup.pra_avg}</div><div class="text-xs text-gray-500">PRA vs</div></div>
+                    </div>
+                    <div class="mt-3 text-center text-sm text-gray-400">Record: ${matchup.wins}-${matchup.games - matchup.wins}</div>`;
+            } else {
+                statsDiv.classList.add('hidden');
+                noHistory.classList.remove('hidden');
+            }
+        }
+
+        function getFilteredGames() {
+            const playerData = DATA.player_data[currentPlayerId];
+            if (!playerData) return [];
+            let games = playerData.games;
+            if (gameTypeFilter === 'conf') games = games.filter(g => g.is_conf === 1);
+            else if (gameTypeFilter === 'nonconf') games = games.filter(g => g.is_conf === 0);
+            return games;
+        }
+
+        function calculateStreak(games, statKey, line) {
+            if (!games || games.length === 0) return { count: 0, direction: '' };
+            const sorted = [...games].sort((a,b) => b.date.localeCompare(a.date));
+            let count = 0, direction = '';
+            for (const game of sorted) {
+                const isOver = game[statKey] > line;
+                if (count === 0) { direction = isOver ? 'OVER' : 'UNDER'; count = 1; }
+                else if ((direction==='OVER' && isOver) || (direction==='UNDER' && !isOver)) count++;
+                else break;
+            }
+            return { count, direction };
+        }
+
+        function renderBars() {
+            const container = document.getElementById('barsContainer');
+            container.innerHTML = '';
+            const statKey = currentStat === 'PRA' ? 'pra' : currentStat;
+            const games = getFilteredGames();
+
+            if (games.length === 0) {
+                container.innerHTML = '<div class="flex items-center justify-center w-full h-full text-gray-500">No games match filter</div>';
+                return;
+            }
+
+            const streak = calculateStreak(games, statKey, currentLine);
+            const streakEl = document.getElementById('streakValue');
+            const streakBox = document.getElementById('streakBox');
+            if (streak.count > 0) {
+                streakEl.textContent = `${streak.count} ${streak.direction}`;
+                streakEl.className = `font-bold text-lg ${streak.direction==='OVER'?'text-over':'text-under'}`;
+                streakBox.className = `bg-dashboard-bg rounded-lg p-3 mb-4 border-l-4 ${streak.direction==='OVER'?'border-over':'border-under'}`;
+            } else {
+                streakEl.textContent = '-';
+            }
+
+            const maxVal = Math.max(...games.map(g => g[statKey])) + 5;
+
+            games.forEach(game => {
+                const value = game[statKey];
+                const isOver = value > currentLine;
+                const heightPct = (value / maxVal) * 100;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex flex-col items-center';
+
+                const bar = document.createElement('div');
+                bar.className = `w-5 md-w-7 rounded-t-md ${isOver?'bar-over':'bar-under'} relative`;
+                bar.style.height = `${heightPct}%`;
+                bar.style.transition = 'height 0.3s ease';
+                if (game.is_conf) bar.style.boxShadow = '0 0 0 2px #3b82f6';
+                if (game.starter === true) bar.style.outline = '2px solid #c084fc';
+
+                const label = document.createElement('div');
+                label.className = 'absolute -top-5 left-1_2 text-xs font-semibold';
+                label.style.transform = 'translateX(-50%)';
+                label.textContent = value;
+                bar.appendChild(label);
+
+                const xLabel = document.createElement('div');
+                xLabel.className = 'text-xs text-gray-500 mt-1 text-center';
+                const dateShort = game.date.slice(5).replace('-', '/');
+                xLabel.innerHTML = `<div class="${game.is_conf?'text-accent font-medium':''}">${game.opponent}</div><div class="text-gray-600" style="font-size:10px;">${dateShort}</div>`;
+
+                wrapper.appendChild(bar);
+                wrapper.appendChild(xLabel);
+                container.appendChild(wrapper);
+            });
+
+            const linePct = (currentLine / maxVal) * 100;
+            document.getElementById('refLine').style.bottom = `${linePct + 12}%`;
+            document.getElementById('refLineLabel').style.bottom = `${linePct + 10}%`;
+            document.getElementById('refLineLabel').textContent = currentLine;
+        }
+
+        function findClosestProb(probs, line) {
+            if (!probs || probs.length === 0) return null;
+            let closest = probs[0], minDiff = Math.abs(probs[0].line - line);
+            for (const p of probs) { const diff = Math.abs(p.line - line); if (diff < minDiff) { minDiff = diff; closest = p; } }
+            return closest;
+        }
+
+        function updateProbabilities() {
+            const playerData = DATA.player_data[currentPlayerId];
+            if (!playerData) return;
+            const probs = playerData.probs[currentStat] || [];
+            const prob = findClosestProb(probs, currentLine);
+            if (!prob) return;
+
+            const formatPct = v => v != null ? (v*100).toFixed(1)+'%' : 'N/A';
+            const colorClass = v => v != null && v > 0.5 ? 'text-over' : 'text-under';
+
+            document.getElementById('hitSeason').textContent = formatPct(prob.hit_rate);
+            document.getElementById('hitSeason').className = `font-semibold ${colorClass(prob.hit_rate)}`;
+            document.getElementById('hitL5').textContent = formatPct(prob.hit_rate_l5);
+            document.getElementById('hitL5').className = `font-semibold ${colorClass(prob.hit_rate_l5)}`;
+            document.getElementById('hitL10').textContent = formatPct(prob.hit_rate_l10);
+            document.getElementById('hitL10').className = `font-semibold ${colorClass(prob.hit_rate_l10)}`;
+            document.getElementById('hitHome').textContent = formatPct(prob.hit_rate_home);
+            document.getElementById('hitHome').className = `font-semibold ${colorClass(prob.hit_rate_home)}`;
+            document.getElementById('hitAway').textContent = formatPct(prob.hit_rate_away);
+            document.getElementById('hitAway').className = `font-semibold ${colorClass(prob.hit_rate_away)}`;
+            document.getElementById('hitConf').textContent = formatPct(prob.hit_rate_conf);
+            document.getElementById('hitConf').className = `font-semibold ${colorClass(prob.hit_rate_conf)}`;
+
+            const setProbBar = (id, barId, val) => {
+                document.getElementById(id).textContent = formatPct(val);
+                const bar = document.getElementById(barId);
+                bar.style.width = `${(val||0)*100}%`;
+                bar.className = `prob-bar h-full ${val>0.5?'bg-over':'bg-under'} rounded-full`;
+            };
+            setProbBar('probEmpirical','probEmpiricalBar', prob.prob_empirical);
+            setProbBar('probPoisson','probPoissonBar', prob.prob_poisson);
+            setProbBar('probNormal','probNormalBar', prob.prob_normal);
+
+            document.getElementById('probEnsemble').textContent = formatPct(prob.prob_ensemble);
+            document.getElementById('probEnsemble').className = `text-2xl font-bold ${colorClass(prob.prob_ensemble)}`;
+            document.getElementById('probEnsembleBar').style.width = `${(prob.prob_ensemble||0)*100}%`;
+
+            const edgeEl = document.getElementById('edgeDirection');
+            edgeEl.textContent = prob.edge_direction;
+            edgeEl.className = `ml-2 px-2 py-1 rounded text-sm font-semibold ${prob.edge_direction==='OVER'?'bg-over-20 text-over':'bg-under-20 text-under'}`;
+
+            const pe = prob.prob_ensemble || 0.5;
+            const implied = pe >= 0.5 ? `-${Math.round(pe/(1-pe)*100)}` : `+${Math.round((1-pe)/pe*100)}`;
+            document.getElementById('impliedOdds').textContent = implied;
+
+            updateRecommendation(prob);
+            updateRollingAverages();
+        }
+
+        function updateRecommendation(prob) {
+            const pe = prob.prob_ensemble || 0.5;
+            const rec = document.getElementById('recommendation');
+            const recDir = document.getElementById('recDirection');
+            const recDetails = document.getElementById('recDetails');
+            const playerData = DATA.player_data[currentPlayerId];
+            const adv = playerData?.advanced;
+            const list = document.getElementById('analysisList');
+            list.innerHTML = '';
+            const info = playerData?.info;
+            const avg = currentStat==='points'?info?.ppg:currentStat==='rebounds'?info?.rpg:currentStat==='assists'?info?.apg:info?.pra;
+
+            const items = [
+                { good: avg > currentLine, text: `Avg (${avg}) ${avg>currentLine?'>':'<'} line` },
+                { good: prob.hit_rate > 0.5, text: `${((prob.hit_rate||0)*100).toFixed(0)}% hit rate` },
+                { good: adv?.tournament_readiness >= 60, text: `TRI: ${adv?.tournament_readiness?.toFixed(0)||'N/A'}`, warn: adv?.tournament_readiness < 40 },
+                { good: currentOpponent.defense_tier==='Poor'||currentOpponent.defense_tier==='Below_Avg', text: `vs ${currentOpponent.defense_tier} D`, warn: currentOpponent.defense_tier==='Elite' }
+            ];
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2 text-sm';
+                const icon = item.warn ? '⚠️' : (item.good ? '✓' : '✗');
+                const color = item.warn ? 'text-yellow-500' : (item.good ? 'text-over' : 'text-under');
+                div.innerHTML = `<span class="${color}">${icon}</span><span>${item.text}</span>`;
+                list.appendChild(div);
+            });
+
+            if (pe > 0.60) { rec.className='p-4 rounded-lg bg-over-20 border border-over-50'; recDir.textContent='STRONG OVER'; recDir.className='text-2xl font-bold text-over'; }
+            else if (pe > 0.55) { rec.className='p-4 rounded-lg bg-over-10 border border-over-30'; recDir.textContent='LEAN OVER'; recDir.className='text-2xl font-bold text-over'; }
+            else if (pe < 0.40) { rec.className='p-4 rounded-lg bg-under-20 border border-under-50'; recDir.textContent='STRONG UNDER'; recDir.className='text-2xl font-bold text-under'; }
+            else if (pe < 0.45) { rec.className='p-4 rounded-lg bg-under-10 border border-under-30'; recDir.textContent='LEAN UNDER'; recDir.className='text-2xl font-bold text-under'; }
+            else { rec.className='p-4 rounded-lg bg-yellow-500-10 border border-yellow-500-30'; recDir.textContent='PASS'; recDir.className='text-2xl font-bold text-yellow-500'; }
+            recDetails.textContent = `${(pe*100).toFixed(1)}% • ${(prob.edge_strength||'').replace('_',' ')}`;
+        }
+
+        function updateRollingAverages() {
+            const statKey = currentStat==='PRA'?'pra':currentStat;
+            const games = getFilteredGames();
+            if (games.length === 0) return;
+            const calcAvg = arr => arr.reduce((a,g)=>a+g[statKey],0)/arr.length;
+            const l3 = games.length>=3?calcAvg(games.slice(-3)):calcAvg(games);
+            const l5 = games.length>=5?calcAvg(games.slice(-5)):calcAvg(games);
+            const l10 = games.length>=10?calcAvg(games.slice(-10)):calcAvg(games);
+            const season = calcAvg(games);
+            const colorFor = v => v>currentLine?'text-over':'text-under';
+            document.getElementById('avgL3').textContent = l3.toFixed(1); document.getElementById('avgL3').className=`text-xl font-bold ${colorFor(l3)}`;
+            document.getElementById('avgL5').textContent = l5.toFixed(1); document.getElementById('avgL5').className=`text-xl font-bold ${colorFor(l5)}`;
+            document.getElementById('avgL10').textContent = l10.toFixed(1); document.getElementById('avgL10').className=`text-xl font-bold ${colorFor(l10)}`;
+            document.getElementById('avgSeason').textContent = season.toFixed(1); document.getElementById('avgSeason').className=`text-xl font-bold ${colorFor(season)}`;
+            const trend = l5 - l10;
+            const trendEl = document.getElementById('trendIndicator');
+            if (trend > 1) trendEl.textContent = '📈'; else if (trend < -1) trendEl.textContent = '📉'; else trendEl.textContent = '➡️';
+        }
+
+        function updateOpponentPanel() {
+            const opp = currentOpponent;
+            document.getElementById('oppName').textContent = opp.name;
+            document.getElementById('netRank').textContent = `${Math.round(opp.pts_pctl || 0)}th`;
+            document.getElementById('oppLogo').textContent = opp.abbrev;
+            document.getElementById('oppLogo').style.background = `#${opp.color || '3b82f6'}33`;
+
+            const tierEl = document.getElementById('defTier');
+            tierEl.textContent = (opp.defense_tier||'Average').toUpperCase();
+            const tierColors = { 'Elite':'bg-over-20 text-over','Good':'bg-blue-500-20 text-blue-400','Average':'bg-yellow-500-20 text-yellow-500','Below_Avg':'bg-orange-500-20 text-orange-400','Poor':'bg-under-20 text-under' };
+            tierEl.className = `px-2 py-1 rounded text-sm font-semibold ${tierColors[opp.defense_tier]||tierColors['Average']}`;
+
+            document.getElementById('ptsAllowed').innerHTML = `${opp.pts_allowed} <span class="text-xs ${opp.pts_pctl<30?'text-over':''}">(${opp.pts_pctl}th %)</span>`;
+
+            const statLabels = { 'points':'Pts','rebounds':'Reb','assists':'Ast','PRA':'PRA' };
+            document.getElementById('oppStatLabel').textContent = statLabels[currentStat];
+            const oppStatVal = currentStat==='rebounds'?opp.opp_reb:currentStat==='PRA'?opp.opp_pra:opp.opp_pts;
+            document.getElementById('oppPlayerStat').textContent = `${oppStatVal} avg`;
+
+            const warning = document.getElementById('matchupWarning');
+            if (opp.defense_tier === 'Elite') {
+                warning.classList.remove('hidden');
+                warning.className = 'mt-4 p-3 rounded-lg bg-yellow-900-20 border border-yellow-600-30';
+                warning.innerHTML = '<div class="flex items-center gap-2 text-yellow-500 text-sm">⚠️ <span>Elite defense - tough matchup</span></div>';
+            } else {
+                warning.classList.add('hidden');
+            }
+            updateMatchupHistory();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('lineSlider').addEventListener('input', e => {
+                currentLine = parseFloat(e.target.value);
+                document.getElementById('lineValue').textContent = currentLine;
+                document.getElementById('lineDisplay').textContent = currentLine;
+                renderBars(); updateProbabilities(); renderQuartiles();
+            });
+
+            document.getElementById('suggestedLineBtn').addEventListener('click', applySuggestedLine);
+
+            document.querySelectorAll('.bench-tab').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    document.querySelectorAll('.bench-tab').forEach(b=>b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    benchView = e.target.dataset.bench;
+                    renderBenchLeaderboard();
+                });
+            });
+
+            document.querySelectorAll('.stat-toggle').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    document.querySelectorAll('.stat-toggle').forEach(b=>b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentStat = e.target.dataset.stat;
+                    document.getElementById('chartStat').textContent = currentStat.toUpperCase();
+                    const playerData = DATA.player_data[currentPlayerId];
+                    if (playerData) {
+                        const info = playerData.info;
+                        const avg = currentStat==='points'?info.ppg:currentStat==='rebounds'?info.rpg:currentStat==='assists'?info.apg:info.pra;
+                        currentLine = Math.round(avg*2)/2;
+                        document.getElementById('lineSlider').value = currentLine;
+                        document.getElementById('lineValue').textContent = currentLine;
+                        document.getElementById('lineDisplay').textContent = currentLine;
+                        updatePositionTab(playerData);
+                    }
+                    renderBars(); updateProbabilities(); updateOpponentPanel();
+                    renderQuartiles(); updateSuggestedLine();
+                });
+            });
+
+            document.getElementById('playerSelect').addEventListener('change', e => loadPlayer(parseInt(e.target.value)));
+
+            document.getElementById('opponentSelect').addEventListener('change', e => {
+                currentOpponent = DATA.teams.find(t => t.id == e.target.value);
+                updateOpponentPanel();
+                const playerData = DATA.player_data[currentPlayerId];
+                if (playerData) {
+                    const probs = playerData.probs[currentStat] || [];
+                    const prob = findClosestProb(probs, currentLine);
+                    if (prob) updateRecommendation(prob);
+                }
+            });
+
+            document.getElementById('gameTypeFilter').addEventListener('change', e => {
+                gameTypeFilter = e.target.value;
+                renderBars(); updateRollingAverages();
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const tab = e.target.dataset.tab;
+                    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(c=>c.classList.add('hidden'));
+                    document.getElementById(`tab-${tab}`).classList.remove('hidden');
+                });
+            });
+        }
+
+        // ---- Quartile Ranges ----
+        function renderQuartiles() {
+            const playerData = DATA.player_data[currentPlayerId];
+            if (!playerData || !playerData.quartiles) return;
+            const q = playerData.quartiles[currentStat] || {};
+            document.getElementById('rangesStatLabel').textContent = currentStat.toUpperCase();
+            document.getElementById('rangesLineVal').textContent = currentLine;
+
+            const windows = ['L5','L10','L20'];
+            // Shared scale across all windows + the prop line
+            let allVals = [currentLine];
+            windows.forEach(w => { const d = q[w]; if (d) { allVals.push(d.min, d.max); } });
+            const lo = Math.min(...allVals), hi = Math.max(...allVals);
+            const pad = (hi - lo) * 0.08 || 1;
+            const scaleLo = lo - pad, scaleHi = hi + pad;
+            const pct = v => ((v - scaleLo) / (scaleHi - scaleLo)) * 100;
+
+            const container = document.getElementById('quartileBoxes');
+            container.innerHTML = windows.map(w => {
+                const d = q[w];
+                if (!d) return `<div><div class="text-xs text-gray-500 mb-1">${w}</div><div class="text-xs text-gray-600">Not enough games</div></div>`;
+                const linePos = pct(currentLine);
+                const boxColor = currentLine < d.q1 ? '#22c55e' : currentLine > d.q3 ? '#ef4444' : '#eab308';
+                return `<div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-gray-400 font-medium">${w} <span class="text-gray-600">(n=${d.n})</span></span>
+                        <span class="text-gray-500">Q1 ${d.q1} • Med ${d.median} • Q3 ${d.q3} • IQR ${d.iqr}</span>
+                    </div>
+                    <div class="qbox-track">
+                        <div class="qbox-whisker" style="left:${pct(d.min)}%;width:${pct(d.q1)-pct(d.min)}%;"></div>
+                        <div class="qbox-whisker" style="left:${pct(d.q3)}%;width:${pct(d.max)-pct(d.q3)}%;"></div>
+                        <div class="qbox-cap" style="left:${pct(d.min)}%;"></div>
+                        <div class="qbox-cap" style="left:${pct(d.max)}%;"></div>
+                        <div class="qbox-box" style="left:${pct(d.q1)}%;width:${pct(d.q3)-pct(d.q1)}%;background:${boxColor};"></div>
+                        <div class="qbox-median" style="left:${pct(d.median)}%;"></div>
+                        <div class="qbox-line" style="left:${linePos}%;"></div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Insight: where does the line fall relative to L10 quartiles?
+            const l10 = q.L10;
+            const insightEl = document.getElementById('rangesInsight');
+            if (l10) {
+                let where, lean;
+                if (currentLine < l10.q1) { where = `below Q1 (${l10.q1})`; lean = 'the line is low — OVER has cleared in ≥75% of the L10 sample'; }
+                else if (currentLine > l10.q3) { where = `above Q3 (${l10.q3})`; lean = 'the line is high — UNDER has cleared in ≥75% of the L10 sample'; }
+                else { where = `inside the Q1–Q3 box (${l10.q1}–${l10.q3})`; lean = 'the line sits in the middle 50% — a true coin-flip zone'; }
+                const cv = l10.median > 0 ? (l10.iqr / l10.median) : 0;
+                const consistency = cv < 0.25 ? 'tight/consistent' : cv < 0.5 ? 'moderate' : 'volatile';
+                insightEl.innerHTML = `Over the L10, the ${currentLine} line falls <span class="text-white font-medium">${where}</span> — ${lean}. Spread is <span class="text-white font-medium">${consistency}</span> (IQR ${l10.iqr} vs median ${l10.median}).`;
+            } else {
+                insightEl.textContent = 'Not enough recent games for an L10 read.';
+            }
+        }
+
+        // ---- Suggested prop line (shrinkage) ----
+        function updateSuggestedLine() {
+            const playerData = DATA.player_data[currentPlayerId];
+            const btn = document.getElementById('suggestedLineBtn');
+            const conf = document.getElementById('suggestedConf');
+            if (!playerData || !playerData.suggested_lines || !playerData.suggested_lines[currentStat]) {
+                btn.textContent = '-'; conf.textContent = ''; return;
+            }
+            const s = playerData.suggested_lines[currentStat];
+            btn.textContent = s.suggested_line;
+            const confShort = s.confidence.startsWith('Low') ? 'Low' : s.confidence;
+            conf.textContent = confShort === 'High' ? '' : `(${confShort} conf)`;
+            btn.title = `Projection ${s.projection} (player avg ${s.player_avg}, position prior ${s.position_prior}, ${Math.round(s.shrink_weight*100)}% own-sample weight)`;
+        }
+
+        function applySuggestedLine() {
+            const playerData = DATA.player_data[currentPlayerId];
+            if (!playerData?.suggested_lines?.[currentStat]) return;
+            currentLine = playerData.suggested_lines[currentStat].suggested_line;
+            document.getElementById('lineSlider').value = currentLine;
+            document.getElementById('lineValue').textContent = currentLine;
+            document.getElementById('lineDisplay').textContent = currentLine;
+            renderBars(); updateProbabilities(); renderQuartiles();
+        }
+
+        // ---- Bench Leaderboard ----
+        let benchView = 'scoring';
+        function renderBenchLeaderboard() {
+            const lb = DATA.bench_leaderboard;
+            if (!lb) return;
+            const el = document.getElementById('benchLeaderboardContent');
+            const rows = lb[benchView] || [];
+
+            if (benchView === 'scoring') {
+                el.innerHTML = tableHtml(
+                    ['#','Player','Team','Pos','Bench G','PPG','Per-36','MPG'],
+                    rows.map((r,i)=>[i+1, r.name, r.team, r.position, r.games, bold(r.pts_avg), r.pts_per36, r.min_avg])
+                );
+            } else if (benchView === 'efficiency') {
+                el.innerHTML = tableHtml(
+                    ['#','Player','Team','Pos','Per-36','PPG','MPG','Bench G'],
+                    rows.map((r,i)=>[i+1, r.name, r.team, r.position, bold(r.pts_per36), r.pts_avg, r.min_avg, r.games])
+                );
+            } else {
+                el.innerHTML = `<p class="text-xs text-gray-500 mb-3">Players who average more points off the bench than in their starts (min 3 starts) — usage/matchup-driven bench value.</p>` + tableHtml(
+                    ['#','Player','Team','Bench PPG','Starter PPG','Diff'],
+                    rows.map((r,i)=>[i+1, r.name, r.team, bold(r.pts_avg), r.starter_pts, `<span style="color:#22c55e;font-weight:600;">+${r.spark_diff}</span>`])
+                );
+            }
+        }
+        function bold(v){ return `<span class="font-semibold">${v}</span>`; }
+        function tableHtml(headers, rows) {
+            const head = headers.map(h=>`<td class="pb-2 pr-3 text-gray-500 text-xs">${h}</td>`).join('');
+            const body = rows.map(r=>`<tr class="bench-row border-t border-card-border">${r.map((c,i)=>`<td class="py-2 pr-3 ${i===1?'font-medium':''}">${c}</td>`).join('')}</tr>`).join('');
+            return `<div style="overflow-x:auto;"><table class="w-full text-sm" style="min-width:520px;"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
