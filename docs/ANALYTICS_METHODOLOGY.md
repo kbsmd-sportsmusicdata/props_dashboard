@@ -23,6 +23,15 @@ Model agreement determines the displayed confidence. These are descriptive estim
 
 The production target is the nearest half-point, with exact whole-number projections moved to the half below to avoid pushes. L5/L10/L20 quartiles describe recent distribution and volatility without allowing isolated outlier games to dominate the summary.
 
+## Advanced and contextual panels
+
+- Game Score uses the standard box-score weighting of points, shooting, rebounds, assists, steals, blocks, fouls, and turnovers; the panel shows the season and L5 averages.
+- Player Form Index is a 0–100 descriptive blend of L10 PRA consistency, true shooting, and recent PRA direction. It replaces the NCAA-facing Tournament Readiness label.
+- True shooting is `PTS / (2 × (FGA + 0.44 × FTA))`.
+- Usage rate uses the player's estimated possessions divided by her team's estimated possessions while scaling for minutes. Opponent box scores are excluded from the denominator.
+- Position percentiles and benchmarks use every WNBA player averaging more than 10 minutes, grouped as Guard, Forward, or Center.
+- Starter/bench cards and head-to-head records are calculated directly from completed player-game records. Bench leaderboards require at least five bench appearances.
+
 ## WNBA context
 
-The pipeline covers the whole league and does not use an NCAA ranking filter. Home/away, rest, opponent defense, starter/bench role, and head-to-head context remain. Commissioner’s Cup context may be included when the source schedule supplies a reliable indicator.
+The pipeline covers the whole league and does not use an NCAA ranking filter. Home/away, rest, opponent defense, starter/bench role, and head-to-head context remain. The current SportsDataverse schedule snapshot does not expose a reliable Commissioner’s Cup indicator, so the dashboard explicitly displays that split as unavailable rather than inferring it.

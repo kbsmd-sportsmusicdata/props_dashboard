@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WBB Player Props Dashboard - v2</title>
+    <title>WNBA Props Dashboard</title>
     <style id="dynamicTheme"></style>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -205,7 +205,7 @@
                                 <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">L10:</span><span class="font-semibold" id="hitL10">-</span></div>
                                 <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Home:</span><span class="font-semibold" id="hitHome">-</span></div>
                                 <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Away:</span><span class="font-semibold" id="hitAway">-</span></div>
-                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Conf:</span><span class="font-semibold" id="hitConf">-</span></div>
+                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Commissioner's Cup:</span><span class="font-semibold" id="hitConf">-</span></div>
                             </div>
                         </div>
                     </div>
@@ -215,7 +215,7 @@
                         <h3 class="text-sm font-semibold text-gray-400 mb-4">ADVANCED METRICS</h3>
                         <div class="metric-card rounded-lg p-4 mb-4">
                             <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm text-gray-400">Tournament Readiness</span>
+                                <span class="text-sm text-gray-400">Player Form Index</span>
                                 <span class="text-2xl font-bold" id="tournamentReadiness">-</span>
                             </div>
                             <div class="h-2 bg-card-border rounded-full overflow-hidden">
@@ -250,7 +250,7 @@
                     <!-- Tab: Position Trends -->
                     <div id="tab-position" class="tab-content p-5 hidden">
                         <h3 class="text-sm font-semibold text-gray-400 mb-1">POSITION-RELATIVE TRENDS</h3>
-                        <p class="text-xs text-gray-500 mb-4">Ranked vs <span id="posGroupCount">-</span> Top-25 <span id="posGroupName">Guards</span></p>
+                        <p class="text-xs text-gray-500 mb-4">Ranked vs <span id="posGroupCount">-</span> qualified WNBA <span id="posGroupName">Guards</span></p>
 
                         <div class="space-y-4" id="positionPctlBars"></div>
 
@@ -312,8 +312,6 @@
                         <h3 class="text-sm font-semibold text-gray-400">GAME LOG - <span id="chartStat">POINTS</span></h3>
                         <select id="gameTypeFilter" class="rounded px-2 py-1 text-sm appearance-none pr-6">
                             <option value="all">All Games</option>
-                            <option value="conf">Commissioner's Cup</option>
-                            <option value="nonconf">Other Games</option>
                         </select>
                     </div>
                     <div class="relative h-64">
@@ -324,7 +322,6 @@
                     <div class="flex justify-center gap-6 mt-2 text-sm flex-wrap">
                         <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-over"></div><span class="text-gray-400">Over</span></div>
                         <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-under"></div><span class="text-gray-400">Under</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-accent"></div><span class="text-gray-400">Commissioner's Cup</span></div>
                         <div class="flex items-center gap-2"><div class="w-3 h-3 rounded" style="border:2px solid #c084fc;"></div><span class="text-gray-400">Started</span></div>
                     </div>
                 </div>
@@ -505,7 +502,7 @@
         }
 
         function updateAdvancedMetrics(adv) {
-            if (!adv) return;
+            if (!adv || Object.keys(adv).length === 0) return;
             const tri = adv.tournament_readiness || 0;
             document.getElementById('tournamentReadiness').textContent = tri.toFixed(1);
             document.getElementById('tournamentReadiness').className = `text-2xl font-bold ${tri>=60?'text-over':tri>=40?'text-yellow-500':'text-under'}`;
@@ -530,7 +527,13 @@
             const info = playerData.info;
 
             document.getElementById('posGroupName').textContent = POSITION_LABELS[posGroup] || posGroup;
-            document.getElementById('posGroupCount').textContent = bench.n_players || '-';
+            document.getElementById('posGroupCount').textContent = bench.n_players ?? 'No position benchmark available';
+
+            if (!bench.n_players || !pctl.qualified) {
+                document.getElementById('positionPctlBars').innerHTML = '<div class="bg-dashboard-bg rounded-lg p-4 text-center text-gray-500 text-sm">No position benchmark available for this player.</div>';
+                document.getElementById('posCompareTable').innerHTML = '';
+                return;
+            }
 
             const stats = [
                 { label: 'Points', pctl: pctl.pts_pctl, player: info.ppg, avg: bench.avg_ppg },
@@ -541,7 +544,7 @@
 
             const barsContainer = document.getElementById('positionPctlBars');
             barsContainer.innerHTML = stats.map(s => {
-                const p = s.pctl != null ? s.pctl : 50;
+                const p = s.pctl;
                 const color = p >= 75 ? '#22c55e' : p >= 40 ? '#eab308' : '#ef4444';
                 return `<div>
                     <div class="flex justify-between text-sm mb-1"><span class="text-gray-400">${s.label}</span><span class="font-semibold" style="color:${color}">${p.toFixed(0)}th percentile</span></div>
@@ -742,8 +745,8 @@
             document.getElementById('hitHome').className = `font-semibold ${colorClass(prob.hit_rate_home)}`;
             document.getElementById('hitAway').textContent = formatPct(prob.hit_rate_away);
             document.getElementById('hitAway').className = `font-semibold ${colorClass(prob.hit_rate_away)}`;
-            document.getElementById('hitConf').textContent = formatPct(prob.hit_rate_conf);
-            document.getElementById('hitConf').className = `font-semibold ${colorClass(prob.hit_rate_conf)}`;
+            document.getElementById('hitConf').textContent = prob.hit_rate_conf != null ? formatPct(prob.hit_rate_conf) : 'Unavailable';
+            document.getElementById('hitConf').className = `font-semibold ${prob.hit_rate_conf != null ? colorClass(prob.hit_rate_conf) : 'text-gray-500'}`;
 
             const setProbBar = (id, barId, val) => {
                 document.getElementById(id).textContent = formatPct(val);
@@ -786,7 +789,7 @@
             const items = [
                 { good: avg > currentLine, text: `Avg (${avg}) ${avg>currentLine?'>':'<'} line` },
                 { good: prob.hit_rate > 0.5, text: `${((prob.hit_rate||0)*100).toFixed(0)}% hit rate` },
-                { good: adv?.tournament_readiness >= 60, text: `TRI: ${adv?.tournament_readiness?.toFixed(0)||'N/A'}`, warn: adv?.tournament_readiness < 40 },
+                { good: adv?.tournament_readiness >= 60, text: `Form index: ${adv?.tournament_readiness?.toFixed(0)||'N/A'}`, warn: adv?.tournament_readiness < 40 },
                 { good: currentOpponent.defense_tier==='Poor'||currentOpponent.defense_tier==='Below_Avg', text: `vs ${currentOpponent.defense_tier} D`, warn: currentOpponent.defense_tier==='Elite' }
             ];
             items.forEach(item => {
@@ -935,7 +938,7 @@
             const windows = ['L5','L10','L20'];
             // Shared scale across all windows + the prop line
             let allVals = [currentLine];
-            windows.forEach(w => { const d = q[w]; if (d) { allVals.push(d.min, d.max); } });
+            windows.forEach(w => { const d = q[w] || q[w.slice(1)]; if (d) { allVals.push(d.min, d.max); } });
             const lo = Math.min(...allVals), hi = Math.max(...allVals);
             const pad = (hi - lo) * 0.08 || 1;
             const scaleLo = lo - pad, scaleHi = hi + pad;
@@ -943,7 +946,7 @@
 
             const container = document.getElementById('quartileBoxes');
             container.innerHTML = windows.map(w => {
-                const d = q[w];
+                const d = q[w] || q[w.slice(1)];
                 if (!d) return `<div><div class="text-xs text-gray-500 mb-1">${w}</div><div class="text-xs text-gray-600">Not enough games</div></div>`;
                 const linePos = pct(currentLine);
                 const boxColor = currentLine < d.q1 ? '#22c55e' : currentLine > d.q3 ? '#ef4444' : '#eab308';
@@ -965,7 +968,7 @@
             }).join('');
 
             // Insight: where does the line fall relative to L10 quartiles?
-            const l10 = q.L10;
+            const l10 = q.L10 || q['10'];
             const insightEl = document.getElementById('rangesInsight');
             if (l10) {
                 let where, lean;

@@ -141,6 +141,136 @@ def create_summary(games: pd.DataFrame) -> pd.DataFrame:
     return summary
 
 
+def _athlete_key(value) -> str:
+    try:
+        number = float(value)
+        return str(int(number)) if number.is_integer() else str(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def build_position_context(summary: pd.DataFrame) -> tuple[dict, dict]:
+    qualified = summary[summary["min_avg"] > 10].copy()
+    percentiles: dict[str, dict] = {}
+    for metric in ("pts_avg", "reb_avg", "ast_avg", "pra_avg"):
+        qualified[f"{metric}_pctl"] = qualified.groupby("position_group")[metric].rank(pct=True) * 100
+    for _, row in summary.iterrows():
+        key = _athlete_key(row["athlete_id"])
+        match = qualified[qualified["athlete_id"] == row["athlete_id"]]
+        percentiles[key] = {"qualified": not match.empty}
+        if not match.empty:
+            item = match.iloc[0]
+            percentiles[key].update({
+                "pts_pctl": round(item["pts_avg_pctl"], 1), "reb_pctl": round(item["reb_avg_pctl"], 1),
+                "ast_pctl": round(item["ast_avg_pctl"], 1), "pra_pctl": round(item["pra_avg_pctl"], 1),
+            })
+    benchmarks = {}
+    for group, rows in qualified[qualified["position_group"] != "Unknown"].groupby("position_group"):
+        benchmarks[group] = {
+            "n_players": int(len(rows)), "avg_ppg": round(rows["pts_avg"].mean(), 1),
+            "avg_rpg": round(rows["reb_avg"].mean(), 1), "avg_apg": round(rows["ast_avg"].mean(), 1),
+            "avg_pra": round(rows["pra_avg"].mean(), 1),
+        }
+    return percentiles, benchmarks
+
+
+def build_starter_splits(player_games: pd.DataFrame) -> dict:
+    result = {}
+    for key, mask in (("as_starter", player_games["starter"]), ("as_bench", ~player_games["starter"])):
+        rows = player_games[mask]
+        result[key] = None if rows.empty else {
+            "games": int(rows["game_id"].nunique()), "pts_avg": round(rows["points"].mean(), 1),
+            "reb_avg": round(rows["rebounds"].mean(), 1), "ast_avg": round(rows["assists"].mean(), 1),
+            "pra_avg": round(rows["PRA"].mean(), 1), "min_avg": round(rows["minutes"].mean(), 1),
+        }
+    return result
+
+
+def build_matchups(player_games: pd.DataFrame) -> dict:
+    result = {}
+    for opponent_id, rows in player_games.dropna(subset=["opponent_team_id"]).groupby("opponent_team_id"):
+        result[_athlete_key(opponent_id)] = {
+            "games": int(rows["game_id"].nunique()), "pts_avg": round(rows["points"].mean(), 1),
+            "reb_avg": round(rows["rebounds"].mean(), 1), "ast_avg": round(rows["assists"].mean(), 1),
+            "pra_avg": round(rows["PRA"].mean(), 1), "wins": int(rows["win"].sum()),
+        }
+    return result
+
+
+def build_advanced_metrics(player_games: pd.DataFrame, all_games: pd.DataFrame | None = None) -> dict:
+    rows = player_games.sort_values("game_date").copy()
+    fgm = pd.to_numeric(_first_existing(rows, ("field_goals_made",), 0), errors="coerce").fillna(0)
+    fga = pd.to_numeric(_first_existing(rows, ("field_goals_attempted",), 0), errors="coerce").fillna(0)
+    ftm = pd.to_numeric(_first_existing(rows, ("free_throws_made",), 0), errors="coerce").fillna(0)
+    fta = pd.to_numeric(_first_existing(rows, ("free_throws_attempted",), 0), errors="coerce").fillna(0)
+    tov = pd.to_numeric(_first_existing(rows, ("turnovers",), 0), errors="coerce").fillna(0)
+    stl = pd.to_numeric(_first_existing(rows, ("steals",), 0), errors="coerce").fillna(0)
+    blk = pd.to_numeric(_first_existing(rows, ("blocks",), 0), errors="coerce").fillna(0)
+    oreb = pd.to_numeric(_first_existing(rows, ("offensive_rebounds",), 0), errors="coerce").fillna(0)
+    dreb = pd.to_numeric(_first_existing(rows, ("defensive_rebounds",), 0), errors="coerce").fillna(0)
+    pf = pd.to_numeric(_first_existing(rows, ("fouls",), 0), errors="coerce").fillna(0)
+    game_score = rows["points"] + .4 * fgm - .7 * fga - .4 * (fta - ftm) + .7 * oreb + .3 * dreb + stl + .7 * rows["assists"] + .7 * blk - .4 * pf - tov
+    denom = 2 * (fga.sum() + .44 * fta.sum())
+    ts_pct = 100 * rows["points"].sum() / denom if denom else None
+    ast_to = rows["assists"].sum() / tov.sum() if tov.sum() else None
+    recent = rows["PRA"].tail(10)
+    consistency = max(0.0, min(100.0, 100 * (1 - recent.std(ddof=0) / recent.mean()))) if recent.mean() else 0.0
+    usage = None
+    if all_games is not None:
+        team_ids = set(rows["team_id"].dropna()) if "team_id" in rows else set()
+        team_rows = all_games[all_games["game_id"].isin(rows["game_id"])]
+        if team_ids and "team_id" in team_rows:
+            team_rows = team_rows[team_rows["team_id"].isin(team_ids)]
+        team_totals = team_rows.groupby("game_id").agg(
+            team_fga=("field_goals_attempted", "sum"), team_fta=("free_throws_attempted", "sum"), team_tov=("turnovers", "sum")
+        )
+        joined = rows.join(team_totals, on="game_id")
+        player_poss = fga + .44 * fta + tov
+        team_poss = joined["team_fga"] + .44 * joined["team_fta"] + joined["team_tov"]
+        valid = (joined["minutes"] > 0) & (team_poss > 0)
+        if valid.any():
+            usage = float((100 * player_poss[valid] * 40 / (joined.loc[valid, "minutes"] * team_poss[valid])).mean())
+    if usage is None:
+        usage = float(((fga + .44 * fta + tov) * 40 / rows["minutes"]).mean())
+    ppg, rpg, apg = rows["points"].mean(), rows["rebounds"].mean(), rows["assists"].mean()
+    scoring_profile = "Primary Scorer" if ppg >= 20 else "Secondary Scorer" if ppg >= 12 else "Low-Volume Scorer"
+    defensive_events = (stl + blk).mean()
+    defensive_profile = "Impact Defender" if defensive_events >= 2 else "Active Defender" if defensive_events >= 1 else "Low Event Rate"
+    form_index = max(0.0, min(100.0, .45 * consistency + .35 * min(100, (ts_pct or 0)) + .20 * min(100, 50 + (rows["PRA"].tail(5).mean() - rows["PRA"].mean()) * 3)))
+    return {
+        "game_score": round(game_score.mean(), 1), "game_score_l5": round(game_score.tail(5).mean(), 1),
+        "game_score_l10": round(game_score.tail(10).mean(), 1), "tournament_readiness": round(form_index, 1),
+        "consistency_l10": round(consistency, 1), "ts_pct": round(ts_pct, 1) if ts_pct is not None else None,
+        "usage": round(usage, 1), "ast_to_tov": round(ast_to, 2) if ast_to is not None else None,
+        "win_rate": round(100 * rows["win"].mean(), 1), "scoring_profile": scoring_profile,
+        "defensive_profile": defensive_profile,
+    }
+
+
+def build_bench_leaderboard(games: pd.DataFrame, min_bench_games: int = 5) -> dict:
+    records = []
+    for _, rows in games.groupby("athlete_id"):
+        bench = rows[~rows["starter"]]
+        starts = rows[rows["starter"]]
+        if bench["game_id"].nunique() < min_bench_games:
+            continue
+        base = {
+            "name": rows["athlete_display_name"].iloc[-1], "team": rows["team_abbreviation"].iloc[-1],
+            "position": position_group(rows.get("athlete_position_abbreviation", pd.Series([""])).mode().iloc[0]),
+            "games": int(bench["game_id"].nunique()), "pts_avg": round(bench["points"].mean(), 1),
+            "min_avg": round(bench["minutes"].mean(), 1),
+        }
+        base["pts_per36"] = round(base["pts_avg"] * 36 / base["min_avg"], 1) if base["min_avg"] else 0
+        if not starts.empty:
+            base["starter_pts"] = round(starts["points"].mean(), 1)
+            base["spark_diff"] = round(base["pts_avg"] - base["starter_pts"], 1)
+        records.append(base)
+    scoring = sorted(records, key=lambda x: x["pts_avg"], reverse=True)[:15]
+    efficiency = sorted([x for x in records if x["min_avg"] >= 8], key=lambda x: x["pts_per36"], reverse=True)[:15]
+    spark = sorted([x for x in records if x.get("spark_diff", 0) > 0], key=lambda x: x["spark_diff"], reverse=True)[:15]
+    return {"scoring": scoring, "efficiency": efficiency, "spark": spark}
+
+
 def probability_table(games: pd.DataFrame, summary: pd.DataFrame) -> pd.DataFrame:
     records = []
     for athlete_id, player in games.groupby("athlete_id"):
@@ -181,9 +311,7 @@ def _json_value(value):
 
 def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.DataFrame, defense: pd.DataFrame, season: int) -> dict:
     players, player_data = [], {}
-    qualified = summary[summary["min_avg"] > 10].copy()
-    for metric in ("pts_avg", "reb_avg", "ast_avg", "pra_avg"):
-        qualified[f"{metric}_pctl"] = qualified.groupby("position_group")[metric].rank(pct=True) * 100
+    position_percentiles, position_benchmarks = build_position_context(summary)
     for _, row in summary.sort_values("pts_avg", ascending=False).head(50).iterrows():
         athlete_id = row["athlete_id"]
         pid = str(int(athlete_id) if float(athlete_id).is_integer() else athlete_id)
@@ -209,10 +337,11 @@ def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.
         for _, game in pg.iterrows():
             game_records.append({"date": game["game_date"], "opponent": game.get("opponent_team_abbreviation", ""), "opponent_id": game.get("opponent_team_id"), "points": game["points"], "rebounds": game["rebounds"], "assists": game["assists"], "pra": game["PRA"], "home_away": "home" if game["is_home"] else "away", "win": int(game.get("team_winner", 0) or 0), "is_conf": int(game.get("is_commissioners_cup", 0) or 0), "rest": game.get("rest_category"), "starter": game["starter"]})
         suggested = {stat: {"player_avg": float(pg[stat].mean()), "position_prior": float(pg[stat].mean()), "shrink_weight": 1.0, "projection": float(pg[stat].mean()), "suggested_line": nearest_half_line(pg[stat].mean()), "confidence": "High" if len(pg)>=15 else "Medium" if len(pg)>=8 else "Low"} for stat in STATS}
-        quartiles = {stat: {str(w): {"min": float(pg[stat].tail(w).min()), "q1": float(pg[stat].tail(w).quantile(.25)), "median": float(pg[stat].tail(w).median()), "q3": float(pg[stat].tail(w).quantile(.75)), "max": float(pg[stat].tail(w).max()), "iqr": float(pg[stat].tail(w).quantile(.75)-pg[stat].tail(w).quantile(.25))} for w in (5,10,20)} for stat in STATS}
-        player_data[pid] = {"info": players[-1], "meta": {"position_name": row["position_group"], "position_group": row["position_group"], "headshot": players[-1]["headshot"], "team_color": "3b82f6", "team_alt_color": "94a3b8"}, "position_pctl": {}, "starter_splits": {}, "games": game_records, "probs": prob_map, "advanced": {}, "matchups": {}, "suggested_lines": suggested, "quartiles": quartiles}
+        quartiles = {stat: {str(w): {"n": int(len(pg[stat].tail(w))), "min": float(pg[stat].tail(w).min()), "q1": float(pg[stat].tail(w).quantile(.25)), "median": float(pg[stat].tail(w).median()), "q3": float(pg[stat].tail(w).quantile(.75)), "max": float(pg[stat].tail(w).max()), "iqr": float(pg[stat].tail(w).quantile(.75)-pg[stat].tail(w).quantile(.25))} for w in (5,10,20)} for stat in STATS}
+        all_player_games = games[games["athlete_id"] == athlete_id]
+        player_data[pid] = {"info": players[-1], "meta": {"position_name": row["position_group"], "position_group": row["position_group"], "headshot": players[-1]["headshot"], "team_color": "3b82f6", "team_alt_color": "94a3b8"}, "position_pctl": position_percentiles.get(pid, {"qualified": False}), "starter_splits": build_starter_splits(all_player_games), "games": game_records, "probs": prob_map, "advanced": build_advanced_metrics(all_player_games, games), "matchups": build_matchups(all_player_games), "suggested_lines": suggested, "quartiles": quartiles}
     teams = [{"id": r["team_id"], "name": r["team_display_name"], "abbrev": r["team_abbreviation"], "defense_tier": r["defense_tier"], "pts_allowed": round(r["pts_allowed_avg"],1), "pts_pctl": round(r["pts_allowed_avg_pctl"],1), "opp_pts": round(r.get("opp_player_pts_avg",0),1), "opp_reb": round(r.get("opp_player_reb_avg",0),1), "opp_pra": round(r.get("opp_player_pra_avg",0),1), "games": int(r["games_played"]), "color": "3b82f6", "alt_color": "94a3b8"} for _,r in defense.iterrows()]
-    return _json_value({"players": players, "teams": teams, "player_data": player_data, "position_benchmarks": {}, "bench_leaderboard": {}, "metadata": {"league": "WNBA", "season": season, "latest_completed_game_date": games["game_date"].max()}})
+    return _json_value({"players": players, "teams": teams, "player_data": player_data, "position_benchmarks": position_benchmarks, "bench_leaderboard": build_bench_leaderboard(games), "metadata": {"league": "WNBA", "season": season, "latest_completed_game_date": games["game_date"].max()}})
 
 
 def write_artifacts(player_box: Path, team_box: Path, output_dir: Path, season: int) -> dict:

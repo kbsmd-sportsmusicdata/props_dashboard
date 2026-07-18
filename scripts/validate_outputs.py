@@ -20,6 +20,10 @@ def validate_dashboard_payload(payload: dict) -> list[str]:
         errors.append("players is empty")
     if not payload.get("teams"):
         errors.append("teams is empty")
+    if not payload.get("position_benchmarks"):
+        errors.append("position_benchmarks is empty")
+    if not payload.get("bench_leaderboard", {}).get("scoring"):
+        errors.append("bench_leaderboard scoring is empty")
     for player in payload.get("players", []):
         pid = str(player.get("id"))
         if pid.endswith(".0"): pid = pid[:-2]
@@ -30,6 +34,9 @@ def validate_dashboard_payload(payload: dict) -> list[str]:
         missing = REQUIRED_STATS - set(pdata.get("probs", {}))
         if missing:
             errors.append(f"player {pid} missing probability stats: {sorted(missing)}")
+        for section in ("advanced", "position_pctl", "starter_splits", "matchups"):
+            if not pdata.get(section):
+                errors.append(f"player {pid} {section} is empty")
     if not payload.get("metadata", {}).get("latest_completed_game_date"):
         errors.append("missing latest completed game date")
     return errors
