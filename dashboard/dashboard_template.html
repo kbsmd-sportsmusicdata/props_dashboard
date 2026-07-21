@@ -75,6 +75,8 @@
         /* Component-specific styles */
         .bar-over { background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%); }
         .bar-under { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); }
+        .game-bar-wrap { height: 100%; justify-content: flex-end; min-width: 1.25rem; }
+        .game-bar { min-height: 4px; flex: 0 0 auto; }
         .stat-toggle.active { background: #3b82f6; color: white; }
         .stat-toggle:not(.active) { background: #334155; color: #94a3b8; }
         input[type="range"] { -webkit-appearance: none; appearance: none; background: #334155; border-radius: 5px; height: 8px; }
@@ -167,6 +169,7 @@
                         <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="position">Position</button>
                         <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="splits">Splits</button>
                         <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="matchup">Matchup</button>
+                        <button class="tab-btn flex-1 tab-btn-sm font-medium" data-tab="quarters">Quarters</button>
                     </div>
 
                     <!-- Tab: Overview -->
@@ -205,7 +208,6 @@
                                 <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">L10:</span><span class="font-semibold" id="hitL10">-</span></div>
                                 <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Home:</span><span class="font-semibold" id="hitHome">-</span></div>
                                 <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Away:</span><span class="font-semibold" id="hitAway">-</span></div>
-                                <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Commissioner's Cup:</span><span class="font-semibold" id="hitConf">-</span></div>
                             </div>
                         </div>
                     </div>
@@ -281,6 +283,12 @@
                             <div id="noMatchupHistory" class="text-center py-8 text-gray-500 hidden"><p>No previous matchup history</p></div>
                         </div>
                     </div>
+
+                    <div id="tab-quarters" class="tab-content p-5 hidden">
+                        <h3 class="text-sm font-semibold text-gray-400 mb-1">QUARTER BREAKDOWN</h3>
+                        <p class="text-xs text-gray-500 mb-4">PBP-derived completed-game totals and per-game averages for the selected prop market.</p>
+                        <div id="quarterBreakdownContent" class="space-y-3"></div>
+                    </div>
                 </div>
 
                 <!-- Probability Models -->
@@ -310,7 +318,7 @@
                 <div class="bg-card-bg rounded-xl p-5 border border-card-border">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-sm font-semibold text-gray-400">GAME LOG - <span id="chartStat">POINTS</span></h3>
-                        <select id="gameTypeFilter" class="rounded px-2 py-1 text-sm appearance-none pr-6">
+                        <select id="gameDateFilter" class="rounded px-2 py-1 text-sm appearance-none pr-6" aria-label="Filter game log by game date">
                             <option value="all">All Games</option>
                         </select>
                     </div>
@@ -396,7 +404,7 @@
         let currentLine = 18.5;
         let currentPlayerId = null;
         let currentOpponent = null;
-        let gameTypeFilter = 'all';
+        let gameDateFilter = 'all';
 
         const POSITION_LABELS = { 'Guard': 'Guards', 'Forward': 'Forwards', 'Center': 'Centers', 'Unknown': 'Players' };
 
@@ -494,11 +502,43 @@
             updateAdvancedMetrics(playerData.advanced);
             updatePositionTab(playerData);
             updateSplitsTab(playerData);
+            populateGameDateFilter(playerData);
             renderBars();
             updateProbabilities();
             updateMatchupHistory();
             renderQuartiles();
+            updateQuarterBreakdown(playerData);
             updateSuggestedLine();
+        }
+
+        function populateGameDateFilter(playerData) {
+            const select = document.getElementById('gameDateFilter');
+            const previous = gameDateFilter;
+            select.innerHTML = '<option value="all">All Games</option>';
+            [...playerData.games].sort((a,b) => b.date.localeCompare(a.date)).forEach(game => {
+                const option = document.createElement('option');
+                option.value = game.game_id;
+                option.textContent = `${game.date} · ${game.matchup || game.opponent}`;
+                select.appendChild(option);
+            });
+            gameDateFilter = [...select.options].some(option => option.value === previous) ? previous : 'all';
+            select.value = gameDateFilter;
+        }
+
+        function updateQuarterBreakdown(playerData) {
+            const container = document.getElementById('quarterBreakdownContent');
+            const breakdown = playerData.quarter_breakdown || {};
+            const quarters = breakdown.quarters || {};
+            if (!breakdown.available) {
+                container.innerHTML = '<div class="bg-dashboard-bg rounded-lg p-4 text-center text-gray-500 text-sm">Quarter-level play-by-play is not available for this player yet.</div>';
+                return;
+            }
+            const metric = currentStat === 'points' ? 'points' : currentStat === 'rebounds' ? 'rebounds' : currentStat === 'assists' ? 'assists' : 'pra';
+            const labels = ['Q1', 'Q2', 'Q3', 'Q4', 'OT'];
+            container.innerHTML = labels.filter(label => quarters[label]).map(label => {
+                const data = quarters[label];
+                return `<div class="bg-dashboard-bg rounded-lg p-3 flex items-center justify-between"><div><div class="font-semibold">${label}</div><div class="text-xs text-gray-500">${data.games} games</div></div><div class="text-right"><div class="text-xl font-bold">${data[`${metric}_total`]}</div><div class="text-xs text-gray-500">${data[`${metric}_avg`]} per game</div></div></div>`;
+            }).join('') || '<div class="bg-dashboard-bg rounded-lg p-4 text-center text-gray-500 text-sm">No quarter data is available for the selected market.</div>';
         }
 
         function updateAdvancedMetrics(adv) {
@@ -638,10 +678,7 @@
         function getFilteredGames() {
             const playerData = DATA.player_data[currentPlayerId];
             if (!playerData) return [];
-            let games = playerData.games;
-            if (gameTypeFilter === 'conf') games = games.filter(g => g.is_conf === 1);
-            else if (gameTypeFilter === 'nonconf') games = games.filter(g => g.is_conf === 0);
-            return games;
+            return gameDateFilter === 'all' ? playerData.games : playerData.games.filter(game => game.game_id === gameDateFilter);
         }
 
         function calculateStreak(games, statKey, line) {
@@ -687,13 +724,12 @@
                 const heightPct = (value / maxVal) * 100;
 
                 const wrapper = document.createElement('div');
-                wrapper.className = 'flex flex-col items-center';
+                wrapper.className = 'game-bar-wrap flex flex-col items-center';
 
                 const bar = document.createElement('div');
-                bar.className = `w-5 md-w-7 rounded-t-md ${isOver?'bar-over':'bar-under'} relative`;
-                bar.style.height = `${heightPct}%`;
+                bar.className = `game-bar w-5 md-w-7 rounded-t-md ${isOver?'bar-over':'bar-under'} relative`;
+                bar.style.height = `${Math.max(4, heightPct)}%`;
                 bar.style.transition = 'height 0.3s ease';
-                if (game.is_conf) bar.style.boxShadow = '0 0 0 2px #3b82f6';
                 if (game.starter === true) bar.style.outline = '2px solid #c084fc';
 
                 const label = document.createElement('div');
@@ -705,7 +741,7 @@
                 const xLabel = document.createElement('div');
                 xLabel.className = 'text-xs text-gray-500 mt-1 text-center';
                 const dateShort = game.date.slice(5).replace('-', '/');
-                xLabel.innerHTML = `<div class="${game.is_conf?'text-accent font-medium':''}">${game.opponent}</div><div class="text-gray-600" style="font-size:10px;">${dateShort}</div>`;
+                xLabel.innerHTML = `<div>${game.opponent}</div><div class="text-gray-600" style="font-size:10px;">${dateShort}</div>`;
 
                 wrapper.appendChild(bar);
                 wrapper.appendChild(xLabel);
@@ -745,8 +781,6 @@
             document.getElementById('hitHome').className = `font-semibold ${colorClass(prob.hit_rate_home)}`;
             document.getElementById('hitAway').textContent = formatPct(prob.hit_rate_away);
             document.getElementById('hitAway').className = `font-semibold ${colorClass(prob.hit_rate_away)}`;
-            document.getElementById('hitConf').textContent = prob.hit_rate_conf != null ? formatPct(prob.hit_rate_conf) : 'Unavailable';
-            document.getElementById('hitConf').className = `font-semibold ${prob.hit_rate_conf != null ? colorClass(prob.hit_rate_conf) : 'text-gray-500'}`;
 
             const setProbBar = (id, barId, val) => {
                 document.getElementById(id).textContent = formatPct(val);
@@ -892,6 +926,7 @@
                         document.getElementById('lineValue').textContent = currentLine;
                         document.getElementById('lineDisplay').textContent = currentLine;
                         updatePositionTab(playerData);
+                        updateQuarterBreakdown(playerData);
                     }
                     renderBars(); updateProbabilities(); updateOpponentPanel();
                     renderQuartiles(); updateSuggestedLine();
@@ -911,8 +946,8 @@
                 }
             });
 
-            document.getElementById('gameTypeFilter').addEventListener('change', e => {
-                gameTypeFilter = e.target.value;
+            document.getElementById('gameDateFilter').addEventListener('change', e => {
+                gameDateFilter = e.target.value;
                 renderBars(); updateRollingAverages();
             });
 

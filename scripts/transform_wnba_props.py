@@ -271,6 +271,41 @@ def build_bench_leaderboard(games: pd.DataFrame, min_bench_games: int = 5) -> di
     return {"scoring": scoring, "efficiency": efficiency, "spark": spark}
 
 
+def build_schedule_context(schedule: pd.DataFrame | None) -> dict[str, dict]:
+    if schedule is None or schedule.empty:
+        return {}
+    required = {"game_id", "game_date", "home_abbreviation", "away_abbreviation"}
+    missing = required - set(schedule.columns)
+    if missing:
+        raise ValueError(f"schedule missing context columns: {sorted(missing)}")
+    result = {}
+    for _, game in schedule.iterrows():
+        result[_athlete_key(game["game_id"])] = {
+            "date": pd.to_datetime(game["game_date"]).date().isoformat(),
+            "matchup": f"{game['away_abbreviation']} @ {game['home_abbreviation']}",
+            "completed": bool(game.get("status_type_completed", False)),
+        }
+    return result
+
+
+def build_quarter_breakdown(player_quarters: pd.DataFrame) -> dict:
+    if player_quarters is None or player_quarters.empty:
+        return {"available": False, "quarters": {}}
+    rows = player_quarters.copy()
+    rows["period_label"] = rows["period"].map(lambda value: f"Q{int(value)}" if int(value) <= 4 else "OT")
+    quarters = {}
+    for label, group in rows.groupby("period_label", sort=False):
+        games = group["game_id"].nunique()
+        points, rebounds, assists = group["points"].sum(), group["rebounds"].sum(), group["assists"].sum()
+        quarters[label] = {
+            "games": int(games), "points_total": int(points), "rebounds_total": int(rebounds), "assists_total": int(assists),
+            "pra_total": int(points + rebounds + assists), "points_avg": round(points / games, 1) if games else 0,
+            "rebounds_avg": round(rebounds / games, 1) if games else 0, "assists_avg": round(assists / games, 1) if games else 0,
+            "pra_avg": round((points + rebounds + assists) / games, 1) if games else 0,
+        }
+    return {"available": bool(quarters), "quarters": quarters}
+
+
 def probability_table(games: pd.DataFrame, summary: pd.DataFrame) -> pd.DataFrame:
     records = []
     for athlete_id, player in games.groupby("athlete_id"):
@@ -309,9 +344,10 @@ def _json_value(value):
     return value
 
 
-def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.DataFrame, defense: pd.DataFrame, season: int) -> dict:
+def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.DataFrame, defense: pd.DataFrame, season: int, schedule: pd.DataFrame | None = None, player_quarters: pd.DataFrame | None = None) -> dict:
     players, player_data = [], {}
     position_percentiles, position_benchmarks = build_position_context(summary)
+    schedule_context = build_schedule_context(schedule)
     for _, row in summary.sort_values("pts_avg", ascending=False).head(50).iterrows():
         athlete_id = row["athlete_id"]
         pid = str(int(athlete_id) if float(athlete_id).is_integer() else athlete_id)
@@ -335,22 +371,27 @@ def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.
             prob_map[stat] = _json_value(rows)
         game_records = []
         for _, game in pg.iterrows():
-            game_records.append({"date": game["game_date"], "opponent": game.get("opponent_team_abbreviation", ""), "opponent_id": game.get("opponent_team_id"), "points": game["points"], "rebounds": game["rebounds"], "assists": game["assists"], "pra": game["PRA"], "home_away": "home" if game["is_home"] else "away", "win": int(game.get("team_winner", 0) or 0), "is_conf": int(game.get("is_commissioners_cup", 0) or 0), "rest": game.get("rest_category"), "starter": game["starter"]})
+            game_id = _athlete_key(game["game_id"])
+            schedule_game = schedule_context.get(game_id, {})
+            game_records.append({"game_id": game_id, "date": schedule_game.get("date", game["game_date"]), "matchup": schedule_game.get("matchup", ""), "opponent": game.get("opponent_team_abbreviation", ""), "opponent_id": game.get("opponent_team_id"), "points": game["points"], "rebounds": game["rebounds"], "assists": game["assists"], "pra": game["PRA"], "home_away": "home" if game["is_home"] else "away", "win": int(game.get("team_winner", 0) or 0), "rest": game.get("rest_category"), "starter": game["starter"]})
         suggested = {stat: {"player_avg": float(pg[stat].mean()), "position_prior": float(pg[stat].mean()), "shrink_weight": 1.0, "projection": float(pg[stat].mean()), "suggested_line": nearest_half_line(pg[stat].mean()), "confidence": "High" if len(pg)>=15 else "Medium" if len(pg)>=8 else "Low"} for stat in STATS}
         quartiles = {stat: {str(w): {"n": int(len(pg[stat].tail(w))), "min": float(pg[stat].tail(w).min()), "q1": float(pg[stat].tail(w).quantile(.25)), "median": float(pg[stat].tail(w).median()), "q3": float(pg[stat].tail(w).quantile(.75)), "max": float(pg[stat].tail(w).max()), "iqr": float(pg[stat].tail(w).quantile(.75)-pg[stat].tail(w).quantile(.25))} for w in (5,10,20)} for stat in STATS}
         all_player_games = games[games["athlete_id"] == athlete_id]
-        player_data[pid] = {"info": players[-1], "meta": {"position_name": row["position_group"], "position_group": row["position_group"], "headshot": players[-1]["headshot"], "team_color": "3b82f6", "team_alt_color": "94a3b8"}, "position_pctl": position_percentiles.get(pid, {"qualified": False}), "starter_splits": build_starter_splits(all_player_games), "games": game_records, "probs": prob_map, "advanced": build_advanced_metrics(all_player_games, games), "matchups": build_matchups(all_player_games), "suggested_lines": suggested, "quartiles": quartiles}
+        quarters = player_quarters[player_quarters["athlete_id"].astype(str) == pid] if player_quarters is not None and not player_quarters.empty else pd.DataFrame()
+        player_data[pid] = {"info": players[-1], "meta": {"position_name": row["position_group"], "position_group": row["position_group"], "headshot": players[-1]["headshot"], "team_color": "3b82f6", "team_alt_color": "94a3b8"}, "position_pctl": position_percentiles.get(pid, {"qualified": False}), "starter_splits": build_starter_splits(all_player_games), "games": game_records, "probs": prob_map, "advanced": build_advanced_metrics(all_player_games, games), "matchups": build_matchups(all_player_games), "quarter_breakdown": build_quarter_breakdown(quarters), "suggested_lines": suggested, "quartiles": quartiles}
     teams = [{"id": r["team_id"], "name": r["team_display_name"], "abbrev": r["team_abbreviation"], "defense_tier": r["defense_tier"], "pts_allowed": round(r["pts_allowed_avg"],1), "pts_pctl": round(r["pts_allowed_avg_pctl"],1), "opp_pts": round(r.get("opp_player_pts_avg",0),1), "opp_reb": round(r.get("opp_player_reb_avg",0),1), "opp_pra": round(r.get("opp_player_pra_avg",0),1), "games": int(r["games_played"]), "color": "3b82f6", "alt_color": "94a3b8"} for _,r in defense.iterrows()]
-    return _json_value({"players": players, "teams": teams, "player_data": player_data, "position_benchmarks": position_benchmarks, "bench_leaderboard": build_bench_leaderboard(games), "metadata": {"league": "WNBA", "season": season, "latest_completed_game_date": games["game_date"].max()}})
+    return _json_value({"players": players, "teams": teams, "schedule": list(schedule_context.values()), "player_data": player_data, "position_benchmarks": position_benchmarks, "bench_leaderboard": build_bench_leaderboard(games), "metadata": {"league": "WNBA", "season": season, "latest_completed_game_date": games["game_date"].max()}})
 
 
-def write_artifacts(player_box: Path, team_box: Path, output_dir: Path, season: int) -> dict:
+def write_artifacts(player_box: Path, team_box: Path, output_dir: Path, season: int, schedule_path: Path | None = None, player_quarter_path: Path | None = None) -> dict:
     games = add_rolling_features(clean_player_games(pd.read_parquet(player_box)))
     team = pd.read_parquet(team_box)
     summary = create_summary(games)
     defense = create_team_defense(team, games)
     probs = probability_table(games, summary)
-    payload = build_payload(games, summary, probs, defense, season)
+    schedule = pd.read_parquet(schedule_path) if schedule_path and schedule_path.exists() else None
+    player_quarters = pd.read_parquet(player_quarter_path) if player_quarter_path and player_quarter_path.exists() else None
+    payload = build_payload(games, summary, probs, defense, season, schedule, player_quarters)
     output_dir.mkdir(parents=True, exist_ok=True)
     games.to_csv(output_dir / "player_game_log.csv", index=False)
     summary.to_csv(output_dir / "player_season_summary.csv", index=False)
@@ -366,7 +407,7 @@ def main() -> int:
     parser.add_argument("--canonical-dir", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
-    write_artifacts(args.canonical_dir / f"player_box_{args.season}.parquet", args.canonical_dir / f"team_box_{args.season}.parquet", args.output_dir, args.season)
+    write_artifacts(args.canonical_dir / f"player_box_{args.season}.parquet", args.canonical_dir / f"team_box_{args.season}.parquet", args.output_dir, args.season, args.canonical_dir / f"schedule_{args.season}.parquet", args.canonical_dir / f"player_quarter_{args.season}.parquet")
     return 0
 
 

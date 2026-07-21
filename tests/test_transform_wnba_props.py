@@ -8,6 +8,8 @@ from scripts.transform_wnba_props import (
     build_bench_leaderboard,
     build_matchups,
     build_position_context,
+    build_quarter_breakdown,
+    build_schedule_context,
     build_starter_splits,
     clean_player_games,
     create_summary,
@@ -125,3 +127,23 @@ def test_usage_rate_ignores_the_opponent_box_score():
     opponent["field_goals_attempted"] = 100
     expanded = pd.concat([games, opponent], ignore_index=True)
     assert build_advanced_metrics(player, expanded)["usage"] == baseline
+
+
+def test_schedule_context_exposes_completed_matchups_and_dates():
+    schedule = pd.DataFrame([
+        {"game_id": 1, "game_date": "2026-05-01", "status_type_completed": True, "away_abbreviation": "LV", "home_abbreviation": "DAL"},
+        {"game_id": 2, "game_date": "2026-05-03", "status_type_completed": False, "away_abbreviation": "MIN", "home_abbreviation": "SEA"},
+    ])
+    context = build_schedule_context(schedule)
+    assert context["1"] == {"date": "2026-05-01", "matchup": "LV @ DAL", "completed": True}
+    assert context["2"]["matchup"] == "MIN @ SEA"
+
+
+def test_quarter_breakdown_reports_totals_and_per_game_averages():
+    quarters = pd.DataFrame([
+        {"game_id": "1", "athlete_id": "10", "period": 1, "points": 6, "rebounds": 2, "assists": 1},
+        {"game_id": "2", "athlete_id": "10", "period": 1, "points": 4, "rebounds": 1, "assists": 3},
+    ])
+    result = build_quarter_breakdown(quarters)
+    assert result["available"] is True
+    assert result["quarters"]["Q1"] == {"games": 2, "points_total": 10, "rebounds_total": 3, "assists_total": 4, "pra_total": 17, "points_avg": 5.0, "rebounds_avg": 1.5, "assists_avg": 2.0, "pra_avg": 8.5}

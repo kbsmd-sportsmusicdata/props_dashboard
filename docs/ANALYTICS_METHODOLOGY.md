@@ -34,4 +34,10 @@ The production target is the nearest half-point, with exact whole-number project
 
 ## WNBA context
 
-The pipeline covers the whole league and does not use an NCAA ranking filter. Home/away, rest, opponent defense, starter/bench role, and head-to-head context remain. The current SportsDataverse schedule snapshot does not expose a reliable Commissioner’s Cup indicator, so the dashboard explicitly displays that split as unavailable rather than inferring it.
+The pipeline covers the whole league and does not use an NCAA ranking filter. Home/away, rest, opponent defense, starter/bench role, and head-to-head context remain. The schedule is used to label completed games as matchups and to filter the game log by exact game date. Commissioner’s Cup labels and splits are intentionally omitted because the schedule snapshot does not provide a reliable flag.
+
+## Quarter analysis
+
+Quarter totals are derived from ESPN play-by-play made shots, assisted made shots, and player rebounds. They are descriptive completed-game totals and per-game averages for PTS, REB, AST, and PRA—not quarter-level prop probabilities. The pipeline stores compact player-quarter aggregates rather than raw event logs.
+
+ESPN occasionally corrects a box score without an equivalent play-by-play event. In the current top-50 dashboard population, 99.6% of played player-games have quarter play-by-play and 98.9% reconcile exactly to the player box score. Treat quarter results as play-by-play-derived context; the full-game box score remains the authoritative source for the probability model.

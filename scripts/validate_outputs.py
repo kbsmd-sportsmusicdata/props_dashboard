@@ -13,7 +13,7 @@ REQUIRED_STATS = {"points", "rebounds", "assists", "PRA"}
 
 def validate_dashboard_payload(payload: dict) -> list[str]:
     errors = []
-    for key in ("players", "teams", "player_data", "position_benchmarks", "bench_leaderboard", "metadata"):
+    for key in ("players", "teams", "schedule", "player_data", "position_benchmarks", "bench_leaderboard", "metadata"):
         if key not in payload:
             errors.append(f"missing payload key: {key}")
     if not payload.get("players"):
@@ -34,7 +34,7 @@ def validate_dashboard_payload(payload: dict) -> list[str]:
         missing = REQUIRED_STATS - set(pdata.get("probs", {}))
         if missing:
             errors.append(f"player {pid} missing probability stats: {sorted(missing)}")
-        for section in ("advanced", "position_pctl", "starter_splits", "matchups"):
+        for section in ("advanced", "position_pctl", "starter_splits", "matchups", "quarter_breakdown"):
             if not pdata.get(section):
                 errors.append(f"player {pid} {section} is empty")
     if not payload.get("metadata", {}).get("latest_completed_game_date"):

@@ -20,7 +20,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.build_dashboard import build_dashboard
-from scripts.fetch_wnba_data import download_all, write_json_atomic
+from scripts.fetch_wnba_data import download_all, download_player_quarters, write_json_atomic
 from scripts.transform_wnba_props import append_new_completed_games, write_artifacts
 from scripts.validate_outputs import validate_dashboard_payload, validate_site
 
@@ -69,6 +69,7 @@ def _prepare_canonical(staging: Path, existing: Path, target: Path, season: int,
     specs = {
         f"player_box_{season}.parquet": ["game_id", "athlete_id"],
         f"team_box_{season}.parquet": ["game_id", "team_id"],
+        f"player_quarter_{season}.parquet": ["game_id", "athlete_id", "period"],
     }
     for filename, keys in specs.items():
         incoming = pd.read_parquet(staging / filename)
@@ -101,6 +102,8 @@ def run_refresh(repo: Path, season: int, *, publish: bool = True) -> RefreshOutc
                 write_run_log(run_log, outcome)
                 return outcome
 
+            download_player_quarters(season, pd.read_parquet(staging / f"schedule_{season}.parquet"), staging, set(new_ids))
+
             canonical_stage = work / "canonical"
             processed_stage = work / "processed"
             site_stage = work / "index.html"
@@ -110,6 +113,8 @@ def run_refresh(repo: Path, season: int, *, publish: bool = True) -> RefreshOutc
                 canonical_stage / f"team_box_{season}.parquet",
                 processed_stage,
                 season,
+                canonical_stage / f"schedule_{season}.parquet",
+                canonical_stage / f"player_quarter_{season}.parquet",
             )
             build_dashboard(repo / "dashboard" / "dashboard_template.html", payload, site_stage)
             errors = validate_dashboard_payload(payload) + validate_site(site_stage)

@@ -8,15 +8,27 @@ def test_validation_requires_dashboard_contract_and_embedded_site(tmp_path: Path
     payload = {
         "players": [{"id": 1}],
         "teams": [{"id": 2}],
-        "player_data": {"1": {"probs": {s: [{}] for s in ("points", "rebounds", "assists", "PRA")}, "advanced": {"game_score": 1}, "position_pctl": {"qualified": True}, "starter_splits": {"as_starter": {"games": 1}}, "matchups": {"2": {"games": 1}}}},
+        "player_data": {"1": {"probs": {s: [{}] for s in ("points", "rebounds", "assists", "PRA")}, "advanced": {"game_score": 1}, "position_pctl": {"qualified": True}, "starter_splits": {"as_starter": {"games": 1}}, "matchups": {"2": {"games": 1}}, "quarter_breakdown": {"available": True, "quarters": {"Q1": {"points_total": 1}}}}},
         "position_benchmarks": {"Guard": {"n_players": 1}},
         "bench_leaderboard": {"scoring": [{"name": "Player"}], "efficiency": [], "spark": []},
+        "schedule": [{"date": "2026-05-01"}],
         "metadata": {"latest_completed_game_date": "2026-05-01"},
     }
     assert validate_dashboard_payload(payload) == []
     site = tmp_path / "index.html"
     site.write_text(f"<html><script>const DATA={json.dumps(payload)}</script></html>")
     assert validate_site(site) == []
+
+
+def test_validation_requires_schedule_and_quarter_contracts():
+    payload = {
+        "players": [{"id": 1}], "teams": [{"id": 2}], "position_benchmarks": {"Guard": {"n_players": 1}}, "bench_leaderboard": {"scoring": [{"name": "Player"}]},
+        "player_data": {"1": {"probs": {s: [{}] for s in ("points", "rebounds", "assists", "PRA")}, "advanced": {"game_score": 1}, "position_pctl": {"qualified": True}, "starter_splits": {"as_starter": {"games": 1}}, "matchups": {"2": {"games": 1}}}},
+        "metadata": {"latest_completed_game_date": "2026-05-01"},
+    }
+    errors = validate_dashboard_payload(payload)
+    assert any("missing payload key: schedule" in error for error in errors)
+    assert any("quarter_breakdown is empty" in error for error in errors)
 
 
 def test_validation_rejects_blank_calculated_sections():

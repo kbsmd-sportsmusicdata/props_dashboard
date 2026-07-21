@@ -55,6 +55,55 @@ def completed_game_ids(schedule: pd.DataFrame) -> set[str]:
     return set(schedule.loc[mask, "game_id"].dropna().astype(str))
 
 
+def player_quarter_rows(game_id: str, plays: list[dict]) -> list[dict]:
+    """Aggregate ESPN play-by-play into player/period PTS, REB, and AST rows."""
+    totals: dict[tuple[str, int], dict] = {}
+
+    def record(athlete_id, period, field: str, value: int = 1) -> None:
+        if athlete_id in (None, "", "nan") or period is None:
+            return
+        period = int(period)
+        if period < 1:
+            return
+        key = (str(athlete_id), period)
+        if key not in totals:
+            totals[key] = {"game_id": str(game_id), "athlete_id": str(athlete_id), "period": period, "points": 0, "rebounds": 0, "assists": 0}
+        totals[key][field] += int(value)
+
+    for play in plays:
+        period = play.get("period.number", play.get("period"))
+        scorer = play.get("participants.0.athlete.id")
+        assister = play.get("participants.1.athlete.id")
+        event_type = str(play.get("type.text", "")).lower()
+        if play.get("scoringPlay") and pd.notna(play.get("scoreValue")):
+            record(scorer, period, "points", play.get("scoreValue", 0))
+            if assister not in (None, "", "nan"):
+                record(assister, period, "assists")
+        if "rebound" in event_type:
+            record(scorer, period, "rebounds")
+    return list(totals.values())
+
+
+def download_player_quarters(season: int, schedule: pd.DataFrame, staging_dir: Path, game_ids: set[str] | None = None, opener: Callable = urllib.request.urlopen) -> Path:
+    """Download completed-game ESPN JSON and persist compact player-quarter totals."""
+    required = {"game_id", "status_type_completed", "game_json_url"}
+    missing = required - set(schedule.columns)
+    if missing:
+        raise ValueError(f"schedule missing player-quarter source columns: {sorted(missing)}")
+    selected = schedule[schedule["status_type_completed"].fillna(False).astype(bool)].copy()
+    if game_ids is not None:
+        selected = selected[selected["game_id"].astype(str).isin({str(item) for item in game_ids})]
+    records: list[dict] = []
+    for _, game in selected.iterrows():
+        with opener(game["game_json_url"]) as response:
+            payload = json.load(response)
+        records.extend(player_quarter_rows(str(game["game_id"]), payload.get("plays", [])))
+    output = staging_dir / f"player_quarter_{season}.parquet"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(records, columns=["game_id", "athlete_id", "period", "points", "rebounds", "assists"]).to_parquet(output, index=False)
+    return output
+
+
 def _atomic_download(url: str, destination: Path, opener: Callable = urllib.request.urlopen) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     with opener(url) as response, tempfile.NamedTemporaryFile(dir=destination.parent, delete=False) as tmp:
@@ -98,6 +147,7 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path)
     args = parser.parse_args()
     manifest = download_all(args.season, args.staging_dir)
+    download_player_quarters(args.season, pd.read_parquet(args.staging_dir / f"schedule_{args.season}.parquet"), args.staging_dir)
     if args.manifest:
         write_json_atomic(args.manifest, manifest)
     print(json.dumps(manifest, indent=2, sort_keys=True))

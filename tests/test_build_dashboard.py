@@ -17,11 +17,15 @@ def test_dashboard_embeds_data_and_has_no_fetch(tmp_path: Path):
     assert all(f"data-stat='{stat}'" in html for stat in ("points", "rebounds", "assists", "PRA"))
 
 
-def test_production_template_uses_wnba_labels_and_explicit_unavailable_states():
+def test_production_template_uses_wnba_labels_schedule_controls_and_quarter_analysis():
     html = Path("dashboard/dashboard_template.html").read_text()
     assert "<title>WNBA Props Dashboard</title>" in html
     assert "Player Form Index" in html
-    assert "Commissioner's Cup:" in html
+    assert "Commissioner" not in html
     assert "Top-25" not in html
     assert "No position benchmark available" in html
     assert "q[w] || q[w.slice(1)]" in html
+    assert 'id="gameDateFilter"' in html
+    assert 'data-tab="quarters"' in html
+    assert "QUARTER BREAKDOWN" in html
+    assert "game-bar-wrap" in html

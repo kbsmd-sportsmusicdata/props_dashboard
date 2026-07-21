@@ -4,6 +4,8 @@
 
 The authoritative freshness signal is the set of completed `game_id` values in the SportsDataverse ESPN WNBA schedule. Hash changes without a newly completed game are logged but do not trigger a rebuild or push.
 
+For each newly completed game, the refresh also downloads its ESPN play-by-play JSON and appends compact player-quarter PTS/REB/AST aggregates. This keeps the Quarter tab current without versioning raw play logs.
+
 ## Daily command
 
 ```bash
