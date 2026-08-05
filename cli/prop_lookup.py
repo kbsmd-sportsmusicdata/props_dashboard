@@ -240,10 +240,6 @@ def print_player_analysis(data, player, opponent=None, line=None, stat='points')
             away_pct = prob['hit_rate_away'] * 100
             print(f"  Home: {home_pct:.1f}%  |  Away: {away_pct:.1f}%")
 
-        if 'hit_rate_cup' in prob and pd.notna(prob['hit_rate_cup']):
-            cup_pct = prob['hit_rate_cup'] * 100
-            print(f"  Commissioner's Cup: {cup_pct:.1f}%")
-
         print()
 
         # Probability models
@@ -314,11 +310,8 @@ def print_player_analysis(data, player, opponent=None, line=None, stat='points')
             is_over = val > line
             over_under = color('OVER', Colors.GREEN) if is_over else color('UNDER', Colors.RED)
             result = 'W' if game['win'] == 1 else 'L'
-            conf_marker = '*' if game.get('is_commissioners_cup', 0) == 1 else ' '
+            print(f"  {date_str:<12} {opp:<6} {val:<6} {over_under:<17} {result}")
 
-            print(f"  {date_str:<12} {opp:<6} {val:<6} {over_under:<17} {result}{conf_marker}")
-
-        print(f"  (* = Commissioner's Cup game)")
         print()
 
     # Advanced metrics

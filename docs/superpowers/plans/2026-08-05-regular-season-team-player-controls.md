@@ -501,7 +501,7 @@ node -e 'const fs=require("fs"); const s=fs.readFileSync("site/index.html","utf8
 
 Expected: template tests pass and Node exits zero.
 
-- [ ] **Step 6: Commit Team and Player controls**
+- [x] **Step 6: Commit Team and Player controls**
 
 ```bash
 git add dashboard/dashboard_template.html tests/test_build_dashboard.py site/index.html
@@ -529,11 +529,11 @@ git commit -m "feat: group players by WNBA team"
 - Consumes: Filtered transformation pipeline and grouped-control template.
 - Produces: Final processed artifacts and standalone GitHub Pages dashboard.
 
-- [ ] **Step 1: Remove active Commissioner content and document exclusions**
+- [x] **Step 1: Remove active Commissioner content and document exclusions**
 
 Delete the Commissioner's Cup sentence from `docs/ANALYTICS_METHODOLOGY.md`. Add a concise README data-policy note stating that special-event Team Coop and Team Spoon games remain in canonical source snapshots but are excluded from processed prop analytics.
 
-- [ ] **Step 2: Rebuild all processed and site artifacts**
+- [x] **Step 2: Rebuild all processed and site artifacts**
 
 Run:
 
@@ -544,7 +544,7 @@ python3 scripts/build_dashboard.py --template dashboard/dashboard_template.html 
 
 Expected: both commands exit zero.
 
-- [ ] **Step 3: Scan every processed artifact and site for excluded content**
+- [x] **Step 3: Scan every processed artifact and site for excluded content**
 
 Run:
 
@@ -554,7 +554,7 @@ rg -n -i "team[[:space:]_-]*coop|team[[:space:]_-]*spoon|commissioner|\bcoop\b|\
 
 Expected: no matches.
 
-- [ ] **Step 4: Run the complete automated verification gate**
+- [x] **Step 4: Run the complete automated verification gate**
 
 Run:
 
@@ -566,7 +566,7 @@ git diff --check
 
 Expected: all tests pass, validation succeeds, and Git reports no whitespace errors.
 
-- [ ] **Step 5: Run rendered Browser acceptance**
+- [x] **Step 5: Run rendered Browser acceptance**
 
 Serve the repository locally and use the Browser plugin to verify:
 
@@ -580,7 +580,7 @@ Serve the repository locally and use the Browser plugin to verify:
 8. No excluded labels appear in the DOM.
 9. No application console warnings or errors occur.
 
-- [ ] **Step 6: Commit regenerated outputs and documentation**
+- [x] **Step 6: Commit regenerated outputs and documentation**
 
 ```bash
 git add README.md docs/ANALYTICS_METHODOLOGY.md data/processed site/index.html

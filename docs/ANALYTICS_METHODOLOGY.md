@@ -34,7 +34,7 @@ The production target is the nearest half-point, with exact whole-number project
 
 ## WNBA context
 
-The pipeline covers the whole league and does not use an NCAA ranking filter. Home/away, rest, opponent defense, starter/bench role, and head-to-head context remain. The schedule is used to label completed games as matchups and to filter the game log by exact game date. Commissioner’s Cup labels and splits are intentionally omitted because the schedule snapshot does not provide a reliable flag.
+The pipeline covers the whole league and does not use an NCAA ranking filter. Home/away, rest, opponent defense, starter/bench role, and head-to-head context remain. The schedule is used to label completed games as matchups and to filter the game log by exact game date. Exhibition and other special-event games outside standard WNBA team matchups are excluded before any analytical calculations.
 
 ## Quarter analysis
 

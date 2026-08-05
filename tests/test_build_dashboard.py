@@ -40,6 +40,9 @@ def test_production_template_has_team_filter_and_grouped_sorted_players():
     assert "populatePlayerDropdown" in html
     assert "document.createElement('optgroup')" in html
     assert "localeCompare" in html
+    assert "function formatOrdinal" in html
+    assert "formatOrdinal(opp.pts_pctl)" in html
+    assert "data.games === 1 ? 'game' : 'games'" in html
 
 
 def test_source_template_explains_when_it_has_not_been_bundled():

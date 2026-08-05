@@ -535,6 +535,14 @@
             return r.toString(16).padStart(2,'0') + g.toString(16).padStart(2,'0') + b.toString(16).padStart(2,'0');
         }
 
+        function formatOrdinal(value) {
+            const rounded = Math.round(Number(value) || 0);
+            const lastTwo = rounded % 100;
+            if (lastTwo >= 11 && lastTwo <= 13) return `${rounded}th`;
+            const suffix = { 1: 'st', 2: 'nd', 3: 'rd' }[rounded % 10] || 'th';
+            return `${rounded}${suffix}`;
+        }
+
         function loadPlayer(playerId) {
             const playerData = DATA.player_data[playerId];
             if (!playerData) return;
@@ -610,7 +618,7 @@
             const labels = ['Q1', 'Q2', 'Q3', 'Q4', 'OT'];
             container.innerHTML = labels.filter(label => quarters[label]).map(label => {
                 const data = quarters[label];
-                return `<div class="bg-dashboard-bg rounded-lg p-3 flex items-center justify-between"><div><div class="font-semibold">${label}</div><div class="text-xs text-gray-500">${data.games} games</div></div><div class="text-right"><div class="text-xl font-bold">${data[`${metric}_total`]}</div><div class="text-xs text-gray-500">${data[`${metric}_avg`]} per game</div></div></div>`;
+                return `<div class="bg-dashboard-bg rounded-lg p-3 flex items-center justify-between"><div><div class="font-semibold">${label}</div><div class="text-xs text-gray-500">${data.games} ${data.games === 1 ? 'game' : 'games'}</div></div><div class="text-right"><div class="text-xl font-bold">${data[`${metric}_total`]}</div><div class="text-xs text-gray-500">${data[`${metric}_avg`]} per game</div></div></div>`;
             }).join('') || '<div class="bg-dashboard-bg rounded-lg p-4 text-center text-gray-500 text-sm">No quarter data is available for the selected market.</div>';
         }
 
@@ -660,7 +668,7 @@
                 const p = s.pctl;
                 const color = p >= 75 ? '#22c55e' : p >= 40 ? '#eab308' : '#ef4444';
                 return `<div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-gray-400">${s.label}</span><span class="font-semibold" style="color:${color}">${p.toFixed(0)}th percentile</span></div>
+                    <div class="flex justify-between text-sm mb-1"><span class="text-gray-400">${s.label}</span><span class="font-semibold" style="color:${color}">${formatOrdinal(p)} percentile</span></div>
                     <div class="h-2 bg-dashboard-bg rounded-full overflow-hidden"><div class="h-full pctl-bar rounded-full" style="width:${p}%;background:${color};"></div></div>
                 </div>`;
             }).join('');
@@ -938,7 +946,7 @@
         function updateOpponentPanel() {
             const opp = currentOpponent;
             document.getElementById('oppName').textContent = opp.name;
-            document.getElementById('netRank').textContent = `${Math.round(opp.pts_pctl || 0)}th`;
+            document.getElementById('netRank').textContent = formatOrdinal(opp.pts_pctl);
             document.getElementById('oppLogo').textContent = opp.abbrev;
             document.getElementById('oppLogo').style.background = `#${opp.color || '3b82f6'}33`;
 
@@ -947,7 +955,7 @@
             const tierColors = { 'Elite':'bg-over-20 text-over','Good':'bg-blue-500-20 text-blue-400','Average':'bg-yellow-500-20 text-yellow-500','Below_Avg':'bg-orange-500-20 text-orange-400','Poor':'bg-under-20 text-under' };
             tierEl.className = `px-2 py-1 rounded text-sm font-semibold ${tierColors[opp.defense_tier]||tierColors['Average']}`;
 
-            document.getElementById('ptsAllowed').innerHTML = `${opp.pts_allowed} <span class="text-xs ${opp.pts_pctl<30?'text-over':''}">(${opp.pts_pctl}th %)</span>`;
+            document.getElementById('ptsAllowed').innerHTML = `${opp.pts_allowed} <span class="text-xs ${opp.pts_pctl<30?'text-over':''}">(${formatOrdinal(opp.pts_pctl)} percentile)</span>`;
 
             const statLabels = { 'points':'Pts','rebounds':'Reb','assists':'Ast','PRA':'PRA' };
             document.getElementById('oppStatLabel').textContent = statLabels[currentStat];

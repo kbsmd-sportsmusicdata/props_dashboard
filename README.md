@@ -50,6 +50,7 @@ See [data refresh](docs/DATA_REFRESH.md), [operations](docs/OPERATIONS.md), [met
 
 - Raw download snapshots and temporary files are ignored.
 - Canonical completed-game history, processed analytics, stable manifests, and the deployed page are versioned.
+- Canonical source history remains auditable, while processed analytics and the dashboard exclude exhibition and other special-event games that do not represent standard WNBA team matchups.
 - The NCAA project that established the analytical design is retained under `docs/reference/ncaa/`; its generated data and dashboards are not part of the WNBA deployment.
 
 ## Limitations and responsible use
