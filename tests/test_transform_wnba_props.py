@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+import scripts.transform_wnba_props as transform
 from scripts.transform_wnba_props import (
     add_rolling_features,
     append_new_completed_games,
@@ -31,6 +32,26 @@ def test_cleaning_excludes_dnp_and_calculates_pra():
     cleaned = clean_player_games(sample_games())
     assert cleaned["game_id"].tolist() == [1, 3]
     assert cleaned["PRA"].tolist() == [15, 29]
+
+
+def test_special_event_game_ids_are_detected_across_team_identity_columns():
+    player = pd.DataFrame([
+        {"game_id": "regular", "team_abbreviation": "LV", "opponent_team_abbreviation": "PHX"},
+        {"game_id": "allstar", "team_abbreviation": "COOP", "opponent_team_abbreviation": "SPO"},
+    ])
+    schedule = pd.DataFrame([
+        {"game_id": "allstar", "home_abbreviation": "COOP", "away_abbreviation": "SPO"},
+    ])
+    assert transform.excluded_special_event_game_ids(player, schedule) == {"allstar"}
+
+
+def test_special_event_rows_are_removed_by_shared_game_id():
+    rows = pd.DataFrame([
+        {"game_id": "regular", "value": 10},
+        {"game_id": "allstar", "value": 99},
+    ])
+    filtered = transform.exclude_special_event_rows(rows, {"allstar"})
+    assert filtered["game_id"].tolist() == ["regular"]
 
 
 def test_rolling_features_exclude_current_game():

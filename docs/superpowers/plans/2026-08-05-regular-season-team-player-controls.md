@@ -32,9 +32,9 @@
 - Produces: `exclude_special_event_rows(frame: pd.DataFrame | None, excluded_game_ids: set[str]) -> pd.DataFrame | None`
 - Consumes: Player, team, schedule, and quarter dataframes with optional team identity columns and `game_id`.
 
-- [ ] **Step 1: Add failing exclusion tests**
+- [x] **Step 1: Add failing exclusion tests**
 
-Add imports for `excluded_special_event_game_ids` and `exclude_special_event_rows`, then add:
+Import `scripts.transform_wnba_props as transform`, then add the tests below using `transform.excluded_special_event_game_ids` and `transform.exclude_special_event_rows` so the RED phase fails at the missing behavior rather than during module collection:
 
 ```python
 def test_special_event_game_ids_are_detected_across_team_identity_columns():
@@ -45,7 +45,7 @@ def test_special_event_game_ids_are_detected_across_team_identity_columns():
     schedule = pd.DataFrame([
         {"game_id": "allstar", "home_abbreviation": "COOP", "away_abbreviation": "SPO"},
     ])
-    assert excluded_special_event_game_ids(player, schedule) == {"allstar"}
+    assert transform.excluded_special_event_game_ids(player, schedule) == {"allstar"}
 
 
 def test_special_event_rows_are_removed_by_shared_game_id():
@@ -53,11 +53,11 @@ def test_special_event_rows_are_removed_by_shared_game_id():
         {"game_id": "regular", "value": 10},
         {"game_id": "allstar", "value": 99},
     ])
-    filtered = exclude_special_event_rows(rows, {"allstar"})
+    filtered = transform.exclude_special_event_rows(rows, {"allstar"})
     assert filtered["game_id"].tolist() == ["regular"]
 ```
 
-- [ ] **Step 2: Run the focused tests and verify RED**
+- [x] **Step 2: Run the focused tests and verify RED**
 
 Run:
 
@@ -67,7 +67,7 @@ python3 -m pytest -q tests/test_transform_wnba_props.py -k "special_event"
 
 Expected: collection fails because the two functions are not defined.
 
-- [ ] **Step 3: Implement normalized token detection and shared filtering**
+- [x] **Step 3: Implement normalized token detection and shared filtering**
 
 Add:
 
@@ -106,7 +106,7 @@ def exclude_special_event_rows(
     return frame.loc[~frame["game_id"].astype(str).isin(excluded_game_ids)].copy()
 ```
 
-- [ ] **Step 4: Run focused tests and verify GREEN**
+- [x] **Step 4: Run focused tests and verify GREEN**
 
 Run:
 

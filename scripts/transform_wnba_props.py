@@ -22,6 +22,38 @@ PROP_LINES = {
     "assists": [x + 0.5 for x in range(1, 9)],
     "PRA": [12.5, 15.5, 18.5, 20.5, 22.5, 25.5, 28.5, 30.5, 32.5, 35.5, 38.5, 40.5],
 }
+EXCLUDED_EVENT_TEAM_TOKENS = {"TEAM COOP", "COOP", "TEAM SPOON", "SPOON", "SPO"}
+TEAM_IDENTITY_COLUMNS = (
+    "team_display_name", "team_name", "team_abbreviation",
+    "opponent_team_display_name", "opponent_team_name", "opponent_team_abbreviation",
+    "home_display_name", "home_name", "home_abbreviation",
+    "away_display_name", "away_name", "away_abbreviation",
+)
+
+
+def excluded_special_event_game_ids(*frames: pd.DataFrame | None) -> set[str]:
+    excluded: set[str] = set()
+    for frame in frames:
+        if frame is None or frame.empty or "game_id" not in frame.columns:
+            continue
+        mask = pd.Series(False, index=frame.index, dtype=bool)
+        for column in TEAM_IDENTITY_COLUMNS:
+            if column in frame.columns:
+                normalized = frame[column].fillna("").astype(str).str.strip().str.upper()
+                mask |= normalized.isin(EXCLUDED_EVENT_TEAM_TOKENS)
+        excluded.update(frame.loc[mask, "game_id"].dropna().astype(str))
+    return excluded
+
+
+def exclude_special_event_rows(
+    frame: pd.DataFrame | None,
+    excluded_game_ids: set[str],
+) -> pd.DataFrame | None:
+    if frame is None:
+        return None
+    if frame.empty or "game_id" not in frame.columns:
+        return frame.copy()
+    return frame.loc[~frame["game_id"].astype(str).isin(excluded_game_ids)].copy()
 
 
 def _first_existing(df: pd.DataFrame, names: tuple[str, ...], default=None):
