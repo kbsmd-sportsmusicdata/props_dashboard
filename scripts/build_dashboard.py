@@ -14,8 +14,11 @@ PLACEHOLDER = "/*__DASHBOARD_DATA__*/"
 
 def build_dashboard(template_path: Path, payload: dict, output_path: Path) -> None:
     template = template_path.read_text(encoding="utf-8")
-    if PLACEHOLDER not in template:
-        raise ValueError(f"dashboard template is missing {PLACEHOLDER}")
+    placeholder_count = template.count(PLACEHOLDER)
+    if placeholder_count != 1:
+        raise ValueError(
+            f"dashboard template must contain exactly one {PLACEHOLDER}; found {placeholder_count}"
+        )
     html = template.replace(PLACEHOLDER, json.dumps(payload, separators=(",", ":")))
     if "fetch(" in html:
         raise ValueError("standalone dashboard must not use fetch()")

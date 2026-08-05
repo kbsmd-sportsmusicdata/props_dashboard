@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from scripts.build_dashboard import PLACEHOLDER, build_dashboard
 
 
@@ -29,3 +31,21 @@ def test_production_template_uses_wnba_labels_schedule_controls_and_quarter_anal
     assert 'data-tab="quarters"' in html
     assert "QUARTER BREAKDOWN" in html
     assert "game-bar-wrap" in html
+
+
+def test_source_template_explains_when_it_has_not_been_bundled():
+    html = Path("dashboard/dashboard_template.html").read_text()
+    assert 'id="templateNotice"' in html
+    assert "Open site/index.html" in html
+    assert "__DASHBOARD_DATA__" in html
+    assert 'id="dashboardPayload"' in html
+    assert "JSON.parse" in html
+    assert html.count(PLACEHOLDER) == 1
+
+
+def test_dashboard_build_rejects_multiple_data_placeholders(tmp_path: Path):
+    template = tmp_path / "template.html"
+    template.write_text(f"<script>{PLACEHOLDER}</script><script>{PLACEHOLDER}</script>")
+
+    with pytest.raises(ValueError, match="exactly one"):
+        build_dashboard(template, {"players": []}, tmp_path / "index.html")

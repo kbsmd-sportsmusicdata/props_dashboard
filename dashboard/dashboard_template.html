@@ -106,7 +106,14 @@
     </style>
 </head>
 <body>
-    <div class="container mx-auto px-4 py-6">
+    <div id="templateNotice" class="container mx-auto px-4 py-6" style="display:none;">
+        <div class="bg-card-bg rounded-xl border border-card-border p-6" role="alert">
+            <h1 class="text-xl font-bold mb-2">Dashboard data is not bundled yet</h1>
+            <p class="text-gray-400 mb-3">You opened the source template. Build the dashboard or open the generated artifact instead.</p>
+            <p class="text-gray-400"><a class="text-accent" href="../site/index.html">Open site/index.html</a> for the populated local dashboard, or use the GitHub Pages link in the README.</p>
+        </div>
+    </div>
+    <div id="dashboardApp" class="container mx-auto px-4 py-6">
         <!-- Header -->
         <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div class="flex items-center gap-3">
@@ -398,6 +405,7 @@
         </div>
     </div>
 
+    <script id="dashboardPayload" type="application/json">/*__DASHBOARD_DATA__*/</script>
     <script>
         let DATA = null;
         let currentStat = 'points';
@@ -409,7 +417,22 @@
         const POSITION_LABELS = { 'Guard': 'Guards', 'Forward': 'Forwards', 'Center': 'Centers', 'Unknown': 'Players' };
 
         async function loadData() {
-            DATA = /*__DASHBOARD_DATA__*/;
+            const payloadNode = document.getElementById('dashboardPayload');
+            const rawData = payloadNode ? payloadNode.textContent.trim() : '';
+            let embeddedData = null;
+            if (rawData && !rawData.startsWith('/*__')) {
+                try {
+                    embeddedData = JSON.parse(rawData);
+                } catch (error) {
+                    console.error('Embedded dashboard data is invalid', error);
+                }
+            }
+            if (!embeddedData || !Array.isArray(embeddedData.players) || embeddedData.players.length === 0) {
+                document.getElementById('templateNotice').style.display = 'block';
+                document.getElementById('dashboardApp').style.display = 'none';
+                return;
+            }
+            DATA = embeddedData;
             init();
         }
 

@@ -8,6 +8,8 @@ The project answers: **Given a player, a stat, and a prop line, how often has sh
 
 The latest validated dashboard is published through GitHub Pages from `site/index.html`. It contains its data directly, so it also works when opened locally without a web server.
 
+When working from a checkout, open `site/index.html` (or the GitHub Pages URL). `dashboard/dashboard_template.html` is the source template and intentionally contains a data placeholder; it is not a populated dashboard until `build_dashboard.py` embeds the processed JSON.
+
 ## Local setup
 
 ```bash
