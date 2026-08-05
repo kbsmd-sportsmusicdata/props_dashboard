@@ -357,7 +357,7 @@ git commit -m "feat: filter special events from processed outputs"
 - Consumes: `DATA.players` with unique IDs and current team names; `DATA.teams` without excluded teams.
 - Produces: `teamSelect`, `populateTeamDropdown()`, and `populatePlayerDropdown(teamName = "all", preferredPlayerId = null)`.
 
-- [ ] **Step 1: Add failing template contract tests**
+- [x] **Step 1: Add failing template contract tests**
 
 Extend the production-template test with:
 
@@ -369,7 +369,7 @@ assert "document.createElement('optgroup')" in html
 assert "localeCompare" in html
 ```
 
-- [ ] **Step 2: Run the template test and verify RED**
+- [x] **Step 2: Run the template test and verify RED**
 
 Run:
 
@@ -379,7 +379,7 @@ python3 -m pytest -q tests/test_build_dashboard.py::test_production_template_use
 
 Expected: FAIL because `teamSelect` and grouped-player functions do not exist.
 
-- [ ] **Step 3: Add the responsive Team control**
+- [x] **Step 3: Add the responsive Team control**
 
 Add `.md-grid-cols-5` alongside existing grid utilities and change the controls grid to five columns. Insert the Team selector before Player:
 
@@ -392,7 +392,7 @@ Add `.md-grid-cols-5` alongside existing grid utilities and change the controls 
 
 Add `for="playerSelect"` and `for="opponentSelect"` to their labels.
 
-- [ ] **Step 4: Implement sorted native controls**
+- [x] **Step 4: Implement sorted native controls**
 
 Replace the current flat dropdown population with these functions:
 
@@ -489,7 +489,7 @@ document.getElementById('teamSelect').addEventListener('change', event => {
 
 Keep the existing Player change behavior.
 
-- [ ] **Step 5: Run template tests and JavaScript parse check**
+- [x] **Step 5: Run template tests and JavaScript parse check**
 
 Run:
 

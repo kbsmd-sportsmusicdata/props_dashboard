@@ -69,7 +69,7 @@
         .border-yellow-500-30{border-color:rgba(234,179,8,.3)}.border-yellow-600-30{border-color:rgba(202,138,4,.3)}
         .grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
         .grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
-        @media (min-width:768px){.md-grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md-grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.md-w-7{width:1.75rem}}
+        @media (min-width:768px){.md-grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md-grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.md-grid-cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}.md-w-7{width:1.75rem}}
         @media (min-width:1024px){.lg-col-span-2{grid-column:span 2/span 2}.lg-grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
         /* Component-specific styles */
@@ -132,9 +132,13 @@
 
         <!-- Controls Row -->
         <div class="bg-card-bg rounded-xl p-4 mb-6 border border-card-border">
-            <div class="grid grid-cols-1 md-grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md-grid-cols-5 gap-4">
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">Player</label>
+                    <label for="teamSelect" class="block text-sm text-gray-400 mb-1">Team</label>
+                    <select id="teamSelect" class="w-full rounded-lg px-3 py-2 appearance-none pr-8 text-sm"></select>
+                </div>
+                <div>
+                    <label for="playerSelect" class="block text-sm text-gray-400 mb-1">Player</label>
                     <select id="playerSelect" class="w-full rounded-lg px-3 py-2 appearance-none pr-8 text-sm"></select>
                 </div>
                 <div>
@@ -156,7 +160,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm text-gray-400 mb-1">Opponent</label>
+                    <label for="opponentSelect" class="block text-sm text-gray-400 mb-1">Opponent</label>
                     <select id="opponentSelect" class="w-full rounded-lg px-3 py-2 appearance-none pr-8 text-sm"></select>
                 </div>
             </div>
@@ -437,30 +441,76 @@
         }
 
         function init() {
-            populateDropdowns();
-            currentPlayerId = DATA.players[0].id;
-            currentOpponent = DATA.teams[0];
+            populateTeamDropdown();
+            const selectedPlayer = populatePlayerDropdown();
+            currentOpponent = populateOpponentDropdown();
+            if (!selectedPlayer || !currentOpponent) return;
+            currentPlayerId = selectedPlayer.id;
             loadPlayer(currentPlayerId);
             updateOpponentPanel();
             renderBenchLeaderboard();
             setupEventListeners();
         }
 
-        function populateDropdowns() {
+        function populateTeamDropdown() {
+            const teamSelect = document.getElementById('teamSelect');
+            teamSelect.innerHTML = '<option value="all">All Teams</option>';
+            const teamNames = [...new Set(DATA.players.map(player => player.team).filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b));
+            teamNames.forEach(teamName => {
+                const option = document.createElement('option');
+                option.value = teamName;
+                option.textContent = teamName;
+                teamSelect.appendChild(option);
+            });
+        }
+
+        function populatePlayerDropdown(teamName = 'all', preferredPlayerId = null) {
             const playerSelect = document.getElementById('playerSelect');
-            DATA.players.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = `${p.name} (${p.abbrev}) - ${p.ppg} PPG`;
-                playerSelect.appendChild(opt);
+            playerSelect.innerHTML = '';
+            const players = DATA.players
+                .filter(player => teamName === 'all' || player.team === teamName)
+                .slice()
+                .sort((a, b) => a.team.localeCompare(b.team) || a.name.localeCompare(b.name));
+            if (!players.length) {
+                const option = document.createElement('option');
+                option.textContent = 'No eligible players';
+                option.disabled = true;
+                playerSelect.appendChild(option);
+                playerSelect.disabled = true;
+                return null;
+            }
+            playerSelect.disabled = false;
+            let currentGroup = null;
+            let optgroup = null;
+            players.forEach(player => {
+                if (player.team !== currentGroup) {
+                    currentGroup = player.team;
+                    optgroup = document.createElement('optgroup');
+                    optgroup.label = currentGroup;
+                    playerSelect.appendChild(optgroup);
+                }
+                const option = document.createElement('option');
+                option.value = player.id;
+                option.textContent = `${player.name} (${player.abbrev}) · ${player.ppg} PPG`;
+                optgroup.appendChild(option);
             });
+            const selectedPlayer = players.find(player => String(player.id) === String(preferredPlayerId)) || players[0];
+            playerSelect.value = String(selectedPlayer.id);
+            return selectedPlayer;
+        }
+
+        function populateOpponentDropdown() {
             const opponentSelect = document.getElementById('opponentSelect');
-            DATA.teams.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t.id;
-                opt.textContent = t.name;
-                opponentSelect.appendChild(opt);
+            opponentSelect.innerHTML = '';
+            const opponents = DATA.teams.slice().sort((a, b) => a.name.localeCompare(b.name));
+            opponents.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team.id;
+                option.textContent = team.name;
+                opponentSelect.appendChild(option);
             });
+            return opponents[0] || null;
         }
 
         function applyTeamTheme(color, altColor) {
@@ -956,7 +1006,12 @@
                 });
             });
 
-            document.getElementById('playerSelect').addEventListener('change', e => loadPlayer(parseInt(e.target.value)));
+            document.getElementById('teamSelect').addEventListener('change', e => {
+                const selectedPlayer = populatePlayerDropdown(e.target.value, currentPlayerId);
+                if (selectedPlayer) loadPlayer(selectedPlayer.id);
+            });
+
+            document.getElementById('playerSelect').addEventListener('change', e => loadPlayer(e.target.value));
 
             document.getElementById('opponentSelect').addEventListener('change', e => {
                 currentOpponent = DATA.teams.find(t => t.id == e.target.value);

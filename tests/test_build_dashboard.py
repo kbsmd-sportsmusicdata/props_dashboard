@@ -33,6 +33,15 @@ def test_production_template_uses_wnba_labels_schedule_controls_and_quarter_anal
     assert "game-bar-wrap" in html
 
 
+def test_production_template_has_team_filter_and_grouped_sorted_players():
+    html = Path("dashboard/dashboard_template.html").read_text()
+    assert 'id="teamSelect"' in html
+    assert "populateTeamDropdown" in html
+    assert "populatePlayerDropdown" in html
+    assert "document.createElement('optgroup')" in html
+    assert "localeCompare" in html
+
+
 def test_source_template_explains_when_it_has_not_been_bundled():
     html = Path("dashboard/dashboard_template.html").read_text()
     assert 'id="templateNotice"' in html
