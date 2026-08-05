@@ -54,6 +54,17 @@ def test_special_event_rows_are_removed_by_shared_game_id():
     assert filtered["game_id"].tolist() == ["regular"]
 
 
+def test_summary_uses_one_athlete_identity_and_latest_team():
+    games = pd.DataFrame([
+        {"game_id": "1", "athlete_id": 10, "athlete_display_name": "Player One", "game_date": "2026-05-01", "minutes": 20, "points": 10, "rebounds": 2, "assists": 3, "team_id": 1, "team_display_name": "Alpha", "team_abbreviation": "ALP", "starter": True},
+        {"game_id": "2", "athlete_id": 10, "athlete_display_name": "Player One", "game_date": "2026-05-03", "minutes": 25, "points": 20, "rebounds": 4, "assists": 5, "team_id": 2, "team_display_name": "Beta", "team_abbreviation": "BET", "starter": True},
+    ])
+    summary = create_summary(clean_player_games(games))
+    assert len(summary) == 1
+    assert summary.iloc[0]["team_display_name"] == "Beta"
+    assert summary.iloc[0]["pts_avg"] == 15
+
+
 def test_rolling_features_exclude_current_game():
     cleaned = clean_player_games(sample_games())
     featured = add_rolling_features(cleaned)

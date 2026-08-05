@@ -157,15 +157,23 @@ def create_team_defense(team_box: pd.DataFrame, games: pd.DataFrame) -> pd.DataF
 
 
 def create_summary(games: pd.DataFrame) -> pd.DataFrame:
-    identity = ["athlete_id", "athlete_display_name", "team_id", "team_display_name", "team_abbreviation"]
-    for col in identity:
-        if col not in games.columns:
-            games[col] = _first_existing(games, (("athlete_name",) if col == "athlete_display_name" else (col,)), "Unknown")
-    summary = games.groupby(identity, dropna=False).agg(
+    games = games.copy()
+    display_identity = ["athlete_display_name", "team_id", "team_display_name", "team_abbreviation"]
+    for column in display_identity:
+        if column not in games.columns:
+            fallback = ("athlete_name",) if column == "athlete_display_name" else (column,)
+            games[column] = _first_existing(games, fallback, "Unknown")
+    summary = games.groupby("athlete_id", dropna=False).agg(
         pts_avg=("points", "mean"), pts_std=("points", "std"), reb_avg=("rebounds", "mean"),
         ast_avg=("assists", "mean"), pra_avg=("PRA", "mean"), min_avg=("minutes", "mean"),
         games_played=("game_id", "nunique"), games_started=("starter", "sum"),
     ).reset_index()
+    latest = games.sort_values(["game_date", "game_id"]).groupby("athlete_id", as_index=False).tail(1)
+    summary = summary.merge(
+        latest[["athlete_id", *display_identity]],
+        on="athlete_id",
+        how="left",
+    )
     summary["position_group"] = "Unknown"
     if "athlete_position_abbreviation" in games.columns:
         positions = games.groupby("athlete_id")["athlete_position_abbreviation"].agg(lambda s: s.mode().iloc[0] if not s.mode().empty else "")

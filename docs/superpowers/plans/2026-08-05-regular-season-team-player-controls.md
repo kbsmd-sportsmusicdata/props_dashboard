@@ -116,7 +116,7 @@ python3 -m pytest -q tests/test_transform_wnba_props.py -k "special_event"
 
 Expected: both special-event tests pass.
 
-- [ ] **Step 5: Commit the exclusion boundary**
+- [x] **Step 5: Commit the exclusion boundary**
 
 ```bash
 git add scripts/transform_wnba_props.py tests/test_transform_wnba_props.py
@@ -135,7 +135,7 @@ git commit -m "feat: exclude WNBA special-event games"
 - Consumes: Filtered, date-sorted player games.
 - Produces: `create_summary(games: pd.DataFrame) -> pd.DataFrame` with exactly one row per `athlete_id` and latest eligible display identity.
 
-- [ ] **Step 1: Add the failing unique-player test**
+- [x] **Step 1: Add the failing unique-player test**
 
 ```python
 def test_summary_uses_one_athlete_identity_and_latest_team():
@@ -149,7 +149,7 @@ def test_summary_uses_one_athlete_identity_and_latest_team():
     assert summary.iloc[0]["pts_avg"] == 15
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run:
 
@@ -159,7 +159,7 @@ python3 -m pytest -q tests/test_transform_wnba_props.py::test_summary_uses_one_a
 
 Expected: FAIL because the existing summary groups one athlete into two team-stint rows.
 
-- [ ] **Step 3: Aggregate by athlete and merge latest identity**
+- [x] **Step 3: Aggregate by athlete and merge latest identity**
 
 Update `create_summary` to group statistics by `athlete_id`, obtain each athlete's last row after sorting by `game_date` and `game_id`, merge `athlete_display_name`, `team_id`, `team_display_name`, and `team_abbreviation`, and retain position-mode behavior. Do not change statistical formulas.
 
@@ -179,7 +179,7 @@ summary = summary.merge(
 )
 ```
 
-- [ ] **Step 4: Run summary and transformation tests**
+- [x] **Step 4: Run summary and transformation tests**
 
 Run:
 
