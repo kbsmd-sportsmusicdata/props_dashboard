@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -15,6 +17,7 @@ from scripts.transform_wnba_props import (
     clean_player_games,
     create_summary,
     nearest_half_line,
+    write_artifacts,
 )
 
 
@@ -63,6 +66,43 @@ def test_summary_uses_one_athlete_identity_and_latest_team():
     assert len(summary) == 1
     assert summary.iloc[0]["team_display_name"] == "Beta"
     assert summary.iloc[0]["pts_avg"] == 15
+
+
+def test_write_artifacts_excludes_special_event_from_every_metric(tmp_path: Path):
+    player = pd.DataFrame([
+        {"game_id": "regular", "athlete_id": 10, "athlete_display_name": "Player One", "game_date": "2026-05-01", "minutes": 30, "points": 10, "rebounds": 4, "assists": 2, "field_goals_attempted": 8, "free_throws_attempted": 2, "turnovers": 1, "team_id": 1, "team_display_name": "Las Vegas Aces", "team_abbreviation": "LV", "opponent_team_id": 2, "opponent_team_abbreviation": "PHX", "athlete_position_abbreviation": "G", "starter": True},
+        {"game_id": "allstar", "athlete_id": 10, "athlete_display_name": "Player One", "game_date": "2026-05-03", "minutes": 30, "points": 50, "rebounds": 20, "assists": 10, "field_goals_attempted": 25, "free_throws_attempted": 8, "turnovers": 2, "team_id": 3, "team_display_name": "TEAM COOP", "team_abbreviation": "COOP", "opponent_team_id": 4, "opponent_team_abbreviation": "SPO", "athlete_position_abbreviation": "G", "starter": True},
+    ])
+    team = pd.DataFrame([
+        {"game_id": "regular", "team_id": 1, "team_display_name": "Las Vegas Aces", "team_abbreviation": "LV", "opponent_team_score": 70},
+        {"game_id": "allstar", "team_id": 3, "team_display_name": "TEAM COOP", "team_abbreviation": "COOP", "opponent_team_score": 120},
+    ])
+    schedule = pd.DataFrame([
+        {"game_id": "regular", "game_date": "2026-05-01", "status_type_completed": True, "away_abbreviation": "PHX", "home_abbreviation": "LV"},
+        {"game_id": "allstar", "game_date": "2026-05-03", "status_type_completed": True, "away_abbreviation": "SPO", "home_abbreviation": "COOP"},
+    ])
+    quarters = pd.DataFrame([
+        {"game_id": "regular", "athlete_id": "10", "period": 1, "points": 4, "rebounds": 1, "assists": 1},
+        {"game_id": "allstar", "athlete_id": "10", "period": 1, "points": 20, "rebounds": 5, "assists": 5},
+    ])
+    player_path, team_path = tmp_path / "player.parquet", tmp_path / "team.parquet"
+    schedule_path, quarter_path = tmp_path / "schedule.parquet", tmp_path / "quarter.parquet"
+    player.to_parquet(player_path, index=False)
+    team.to_parquet(team_path, index=False)
+    schedule.to_parquet(schedule_path, index=False)
+    quarters.to_parquet(quarter_path, index=False)
+
+    output = tmp_path / "processed"
+    payload = write_artifacts(player_path, team_path, output, 2026, schedule_path, quarter_path)
+
+    assert payload["players"][0]["ppg"] == 10
+    assert [item["matchup"] for item in payload["schedule"]] == ["PHX @ LV"]
+    assert [game["game_id"] for game in payload["player_data"]["10"]["games"]] == ["regular"]
+    assert payload["player_data"]["10"]["quarter_breakdown"]["quarters"]["Q1"]["points_total"] == 4
+    for artifact in output.iterdir():
+        contents = artifact.read_text().upper()
+        assert "COOP" not in contents
+        assert "SPOON" not in contents
 
 
 def test_rolling_features_exclude_current_game():

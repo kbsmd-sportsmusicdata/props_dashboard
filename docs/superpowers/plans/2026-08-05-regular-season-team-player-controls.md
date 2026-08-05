@@ -189,7 +189,7 @@ python3 -m pytest -q tests/test_transform_wnba_props.py
 
 Expected: all transformation tests pass, including the unique identity assertion.
 
-- [ ] **Step 5: Commit unique athlete summaries**
+- [x] **Step 5: Commit unique athlete summaries**
 
 ```bash
 git add scripts/transform_wnba_props.py tests/test_transform_wnba_props.py
@@ -210,7 +210,7 @@ git commit -m "fix: use unique latest-team player identities"
 - Consumes: `excluded_special_event_game_ids` and `exclude_special_event_rows` from Task 1.
 - Produces: Filtered processed CSV files and dashboard payload with unique players and no excluded tokens.
 
-- [ ] **Step 1: Add failing payload and validation tests**
+- [x] **Step 1: Add failing payload and validation tests**
 
 Import `Path` and `write_artifacts` in `tests/test_transform_wnba_props.py`, then add:
 
@@ -266,7 +266,7 @@ def test_validation_rejects_special_event_content():
     assert any("excluded special-event term" in error for error in errors)
 ```
 
-- [ ] **Step 2: Run focused tests and verify RED**
+- [x] **Step 2: Run focused tests and verify RED**
 
 Run:
 
@@ -276,7 +276,7 @@ python3 -m pytest -q tests/test_transform_wnba_props.py -k "special_event" tests
 
 Expected: FAIL because `write_artifacts` does not apply the shared game-ID filter and validation does not reject excluded content.
 
-- [ ] **Step 3: Filter all source frames before calculations**
+- [x] **Step 3: Filter all source frames before calculations**
 
 In `write_artifacts`:
 
@@ -309,7 +309,7 @@ probs = probability_table(games, summary)
 payload = build_payload(games, summary, probs, defense, season, schedule, player_quarters)
 ```
 
-- [ ] **Step 4: Reject excluded terms and duplicate player IDs in validation**
+- [x] **Step 4: Reject excluded terms and duplicate player IDs in validation**
 
 Import `re` in `scripts/validate_outputs.py`. In `validate_dashboard_payload`, serialize the payload case-insensitively and reject exact special-event tokens. Also compare the listed player IDs with their set and require one `player_data` entry per listed ID.
 
@@ -328,7 +328,7 @@ if set(player_ids) != set(payload.get("player_data", {})):
     errors.append("player list and player_data keys do not match")
 ```
 
-- [ ] **Step 5: Run focused and full Python tests**
+- [x] **Step 5: Run focused and full Python tests**
 
 Run:
 

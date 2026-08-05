@@ -424,13 +424,23 @@ def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.
 
 
 def write_artifacts(player_box: Path, team_box: Path, output_dir: Path, season: int, schedule_path: Path | None = None, player_quarter_path: Path | None = None) -> dict:
-    games = add_rolling_features(clean_player_games(pd.read_parquet(player_box)))
+    player = pd.read_parquet(player_box)
     team = pd.read_parquet(team_box)
+    schedule = pd.read_parquet(schedule_path) if schedule_path and schedule_path.exists() else None
+    player_quarters = pd.read_parquet(player_quarter_path) if player_quarter_path and player_quarter_path.exists() else None
+    excluded_game_ids = excluded_special_event_game_ids(player, team, schedule)
+    player = exclude_special_event_rows(player, excluded_game_ids)
+    team = exclude_special_event_rows(team, excluded_game_ids)
+    schedule = exclude_special_event_rows(schedule, excluded_game_ids)
+    player_quarters = exclude_special_event_rows(player_quarters, excluded_game_ids)
+    games = add_rolling_features(clean_player_games(player))
+    if games.empty:
+        raise ValueError("no eligible player games remain after special-event exclusion")
+    if team.empty:
+        raise ValueError("no eligible team games remain after special-event exclusion")
     summary = create_summary(games)
     defense = create_team_defense(team, games)
     probs = probability_table(games, summary)
-    schedule = pd.read_parquet(schedule_path) if schedule_path and schedule_path.exists() else None
-    player_quarters = pd.read_parquet(player_quarter_path) if player_quarter_path and player_quarter_path.exists() else None
     payload = build_payload(games, summary, probs, defense, season, schedule, player_quarters)
     output_dir.mkdir(parents=True, exist_ok=True)
     games.to_csv(output_dir / "player_game_log.csv", index=False)

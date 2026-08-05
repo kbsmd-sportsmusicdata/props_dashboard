@@ -5,14 +5,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 
 REQUIRED_STATS = {"points", "rebounds", "assists", "PRA"}
+EXCLUDED_EVENT_PATTERN = re.compile(
+    r"\b(?:TEAM\s+COOP|COOP|TEAM\s+SPOON|SPOON|SPO)\b",
+    re.IGNORECASE,
+)
 
 
 def validate_dashboard_payload(payload: dict) -> list[str]:
     errors = []
+    serialized = json.dumps(payload, sort_keys=True)
+    if EXCLUDED_EVENT_PATTERN.search(serialized):
+        errors.append("payload contains excluded special-event term")
     for key in ("players", "teams", "schedule", "player_data", "position_benchmarks", "bench_leaderboard", "metadata"):
         if key not in payload:
             errors.append(f"missing payload key: {key}")
@@ -24,6 +32,11 @@ def validate_dashboard_payload(payload: dict) -> list[str]:
         errors.append("position_benchmarks is empty")
     if not payload.get("bench_leaderboard", {}).get("scoring"):
         errors.append("bench_leaderboard scoring is empty")
+    player_ids = [str(player.get("id")).removesuffix(".0") for player in payload.get("players", [])]
+    if len(player_ids) != len(set(player_ids)):
+        errors.append("players contains duplicate athlete IDs")
+    if set(player_ids) != set(payload.get("player_data", {})):
+        errors.append("player list and player_data keys do not match")
     for player in payload.get("players", []):
         pid = str(player.get("id"))
         if pid.endswith(".0"): pid = pid[:-2]
