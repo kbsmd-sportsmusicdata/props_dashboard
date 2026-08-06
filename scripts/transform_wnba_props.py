@@ -16,6 +16,7 @@ from scipy import stats
 
 STATS = ("points", "rebounds", "assists", "PRA")
 WINDOWS = (3, 5, 10, 20)
+DASHBOARD_FEATURED_ATHLETE_IDS = frozenset({2529137})
 PROP_LINES = {
     "points": [8.5, 10.5, 12.5, 14.5, 15.5, 16.5, 17.5, 18.5, 19.5, 20.5, 22.5, 24.5, 26.5, 28.5],
     "rebounds": [x + 0.5 for x in range(2, 13)],
@@ -179,6 +180,21 @@ def create_summary(games: pd.DataFrame) -> pd.DataFrame:
         positions = games.groupby("athlete_id")["athlete_position_abbreviation"].agg(lambda s: s.mode().iloc[0] if not s.mode().empty else "")
         summary["position_group"] = summary["athlete_id"].map(positions).map(position_group)
     return summary
+
+
+def select_dashboard_players(
+    summary: pd.DataFrame,
+    limit: int = 50,
+    featured_athlete_ids: frozenset[int] = DASHBOARD_FEATURED_ATHLETE_IDS,
+) -> pd.DataFrame:
+    ranked = summary.sort_values("pts_avg", ascending=False)
+    featured = ranked[ranked["athlete_id"].isin(featured_athlete_ids)]
+    return (
+        pd.concat([ranked.head(limit), featured], ignore_index=True)
+        .drop_duplicates("athlete_id", keep="first")
+        .sort_values("pts_avg", ascending=False)
+        .reset_index(drop=True)
+    )
 
 
 def _athlete_key(value) -> str:
@@ -388,7 +404,7 @@ def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.
     players, player_data = [], {}
     position_percentiles, position_benchmarks = build_position_context(summary)
     schedule_context = build_schedule_context(schedule)
-    for _, row in summary.sort_values("pts_avg", ascending=False).head(50).iterrows():
+    for _, row in select_dashboard_players(summary).iterrows():
         athlete_id = row["athlete_id"]
         pid = str(int(athlete_id) if float(athlete_id).is_integer() else athlete_id)
         players.append({"id": athlete_id, "name": row["athlete_display_name"], "team": row["team_display_name"], "abbrev": row["team_abbreviation"], "ppg": round(row["pts_avg"],1), "rpg": round(row["reb_avg"],1), "apg": round(row["ast_avg"],1), "pra": round(row["pra_avg"],1), "games": int(row["games_played"]), "color": "3b82f6", "position_group": row["position_group"], "headshot": f"https://a.espncdn.com/i/headshots/wnba/players/full/{pid}.png"})

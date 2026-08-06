@@ -68,6 +68,22 @@ def test_summary_uses_one_athlete_identity_and_latest_team():
     assert summary.iloc[0]["pts_avg"] == 15
 
 
+def test_dashboard_player_selection_includes_featured_player_beyond_limit_once():
+    summary = pd.DataFrame([
+        {"athlete_id": athlete_id, "athlete_display_name": f"Player {athlete_id}", "pts_avg": 100 - athlete_id}
+        for athlete_id in range(1, 52)
+    ] + [
+        {"athlete_id": 2529137, "athlete_display_name": "Natasha Cloud", "pts_avg": 9.9},
+    ])
+
+    selected = transform.select_dashboard_players(summary, limit=50)
+
+    assert len(selected) == 51
+    assert selected["athlete_id"].is_unique
+    assert selected["athlete_display_name"].eq("Natasha Cloud").sum() == 1
+    assert "Player 51" not in set(selected["athlete_display_name"])
+
+
 def test_write_artifacts_excludes_special_event_from_every_metric(tmp_path: Path):
     player = pd.DataFrame([
         {"game_id": "regular", "athlete_id": 10, "athlete_display_name": "Player One", "game_date": "2026-05-01", "minutes": 30, "points": 10, "rebounds": 4, "assists": 2, "field_goals_attempted": 8, "free_throws_attempted": 2, "turnovers": 1, "team_id": 1, "team_display_name": "Las Vegas Aces", "team_abbreviation": "LV", "opponent_team_id": 2, "opponent_team_abbreviation": "PHX", "athlete_position_abbreviation": "G", "starter": True},
