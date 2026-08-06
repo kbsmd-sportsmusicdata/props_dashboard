@@ -68,19 +68,25 @@ def test_summary_uses_one_athlete_identity_and_latest_team():
     assert summary.iloc[0]["pts_avg"] == 15
 
 
-def test_dashboard_player_selection_includes_featured_player_beyond_limit_once():
+def test_dashboard_player_selection_includes_featured_players_beyond_limit_once():
     summary = pd.DataFrame([
         {"athlete_id": athlete_id, "athlete_display_name": f"Player {athlete_id}", "pts_avg": 100 - athlete_id}
         for athlete_id in range(1, 52)
     ] + [
         {"athlete_id": 2529137, "athlete_display_name": "Natasha Cloud", "pts_avg": 9.9},
+        {"athlete_id": 3910470, "athlete_display_name": "Maria Conde", "pts_avg": 9.1},
+        {"athlete_id": 4398729, "athlete_display_name": "Emily Engstler", "pts_avg": 9.2},
     ])
 
     selected = transform.select_dashboard_players(summary, limit=50)
 
-    assert len(selected) == 51
+    assert len(selected) == 53
     assert selected["athlete_id"].is_unique
-    assert selected["athlete_display_name"].eq("Natasha Cloud").sum() == 1
+    assert {
+        "Natasha Cloud",
+        "Maria Conde",
+        "Emily Engstler",
+    }.issubset(set(selected["athlete_display_name"]))
     assert "Player 51" not in set(selected["athlete_display_name"])
 
 

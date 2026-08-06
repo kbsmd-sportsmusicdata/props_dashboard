@@ -16,7 +16,7 @@ from scipy import stats
 
 STATS = ("points", "rebounds", "assists", "PRA")
 WINDOWS = (3, 5, 10, 20)
-DASHBOARD_FEATURED_ATHLETE_IDS = frozenset({2529137})
+DASHBOARD_FEATURED_ATHLETE_IDS = frozenset({2529137, 3910470, 4398729})
 PROP_LINES = {
     "points": [8.5, 10.5, 12.5, 14.5, 15.5, 16.5, 17.5, 18.5, 19.5, 20.5, 22.5, 24.5, 26.5, 28.5],
     "rebounds": [x + 0.5 for x in range(2, 13)],
