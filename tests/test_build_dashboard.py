@@ -77,3 +77,17 @@ def test_dashboard_build_embeds_live_scenario_source(tmp_path: Path):
     assert "/*__LIVE_SCENARIO__*/" not in html
     assert "globalThis.LiveScenarioModel" in html
     assert "fetch(" not in html
+
+
+def test_production_template_has_live_scenario_controls_and_state_hooks():
+    html = Path("dashboard/dashboard_template.html").read_text()
+    for control_id in (
+        "liveGameState", "liveElapsedMinutes", "liveCurrentStat", "liveTeamScore",
+        "liveOpponentScore", "livePlayerMinutes", "liveScenarioApply", "liveScenarioReset",
+        "liveScenarioStatus", "liveScenarioSummary", "liveScenarioBadge",
+    ):
+        assert f'id="{control_id}"' in html
+    for hook in ("applyLiveScenario", "resetLiveScenario", "renderLiveScenarioState", "getActiveProbability"):
+        assert f"function {hook}" in html
+    assert "LIVE SCENARIO" in html
+    assert "Pregame hit rates" in html
