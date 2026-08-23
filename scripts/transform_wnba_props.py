@@ -390,6 +390,22 @@ def probability_table(games: pd.DataFrame, summary: pd.DataFrame) -> pd.DataFram
     return pd.DataFrame(records)
 
 
+def build_live_model(player_games: pd.DataFrame, league_total_scoring_avg: float) -> dict[str, dict]:
+    team_scores = player_games[["game_id", "team_score"]].drop_duplicates("game_id")["team_score"].astype(float)
+    result: dict[str, dict] = {}
+    for stat in STATS:
+        values = player_games[stat].astype(float)
+        result[stat] = {
+            "season_mean": float(values.mean()),
+            "season_std": float(values.std(ddof=1)) if len(values) > 1 else 0.0,
+            "games_played": int(len(values)),
+            "historical_totals": values.tolist(),
+            "team_scoring_avg": float(team_scores.mean()),
+            "league_total_scoring_avg": float(league_total_scoring_avg),
+        }
+    return result
+
+
 def _json_value(value):
     if isinstance(value, dict): return {str(k): _json_value(v) for k, v in value.items()}
     if isinstance(value, list): return [_json_value(v) for v in value]
@@ -404,6 +420,12 @@ def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.
     players, player_data = [], {}
     position_percentiles, position_benchmarks = build_position_context(summary)
     schedule_context = build_schedule_context(schedule)
+    league_total_scoring_avg = float(
+        games[["game_id", "team_score", "opponent_team_score"]]
+        .drop_duplicates("game_id")
+        .assign(total=lambda frame: frame["team_score"].astype(float) + frame["opponent_team_score"].astype(float))["total"]
+        .mean()
+    )
     for _, row in select_dashboard_players(summary).iterrows():
         athlete_id = row["athlete_id"]
         pid = str(int(athlete_id) if float(athlete_id).is_integer() else athlete_id)
@@ -434,7 +456,7 @@ def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.
         quartiles = {stat: {str(w): {"n": int(len(pg[stat].tail(w))), "min": float(pg[stat].tail(w).min()), "q1": float(pg[stat].tail(w).quantile(.25)), "median": float(pg[stat].tail(w).median()), "q3": float(pg[stat].tail(w).quantile(.75)), "max": float(pg[stat].tail(w).max()), "iqr": float(pg[stat].tail(w).quantile(.75)-pg[stat].tail(w).quantile(.25))} for w in (5,10,20)} for stat in STATS}
         all_player_games = games[games["athlete_id"] == athlete_id]
         quarters = player_quarters[player_quarters["athlete_id"].astype(str) == pid] if player_quarters is not None and not player_quarters.empty else pd.DataFrame()
-        player_data[pid] = {"info": players[-1], "meta": {"position_name": row["position_group"], "position_group": row["position_group"], "headshot": players[-1]["headshot"], "team_color": "3b82f6", "team_alt_color": "94a3b8"}, "position_pctl": position_percentiles.get(pid, {"qualified": False}), "starter_splits": build_starter_splits(all_player_games), "games": game_records, "probs": prob_map, "advanced": build_advanced_metrics(all_player_games, games), "matchups": build_matchups(all_player_games), "quarter_breakdown": build_quarter_breakdown(quarters), "suggested_lines": suggested, "quartiles": quartiles}
+        player_data[pid] = {"info": players[-1], "meta": {"position_name": row["position_group"], "position_group": row["position_group"], "headshot": players[-1]["headshot"], "team_color": "3b82f6", "team_alt_color": "94a3b8"}, "position_pctl": position_percentiles.get(pid, {"qualified": False}), "starter_splits": build_starter_splits(all_player_games), "games": game_records, "probs": prob_map, "live_model": build_live_model(all_player_games, league_total_scoring_avg), "advanced": build_advanced_metrics(all_player_games, games), "matchups": build_matchups(all_player_games), "quarter_breakdown": build_quarter_breakdown(quarters), "suggested_lines": suggested, "quartiles": quartiles}
     teams = [{"id": r["team_id"], "name": r["team_display_name"], "abbrev": r["team_abbreviation"], "defense_tier": r["defense_tier"], "pts_allowed": round(r["pts_allowed_avg"],1), "pts_pctl": round(r["pts_allowed_avg_pctl"],1), "opp_pts": round(r.get("opp_player_pts_avg",0),1), "opp_reb": round(r.get("opp_player_reb_avg",0),1), "opp_pra": round(r.get("opp_player_pra_avg",0),1), "games": int(r["games_played"]), "color": "3b82f6", "alt_color": "94a3b8"} for _,r in defense.iterrows()]
     return _json_value({"players": players, "teams": teams, "schedule": list(schedule_context.values()), "player_data": player_data, "position_benchmarks": position_benchmarks, "bench_leaderboard": build_bench_leaderboard(games), "metadata": {"league": "WNBA", "season": season, "latest_completed_game_date": games["game_date"].max()}})
 

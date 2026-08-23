@@ -9,6 +9,7 @@ from scripts.transform_wnba_props import (
     append_new_completed_games,
     build_advanced_metrics,
     build_bench_leaderboard,
+    build_live_model,
     build_matchups,
     build_position_context,
     build_quarter_breakdown,
@@ -153,6 +154,20 @@ def test_nearest_half_line_never_returns_a_whole_number():
     assert nearest_half_line(18.0) == 17.5
     assert nearest_half_line(18.2) == 18.5
     assert nearest_half_line(18.8) == 18.5
+
+
+def test_live_model_uses_the_full_filtered_history_not_the_dashboard_tail():
+    games = rich_games()
+    player_games = games[games["athlete_id"] == 10]
+
+    live = build_live_model(player_games, league_total_scoring_avg=160.0)
+
+    assert set(live) == {"points", "rebounds", "assists", "PRA"}
+    assert live["points"]["games_played"] == 6
+    assert live["points"]["historical_totals"] == player_games["points"].astype(float).tolist()
+    assert live["points"]["season_mean"] == pytest.approx(player_games["points"].mean())
+    assert live["points"]["team_scoring_avg"] == 80.0
+    assert live["points"]["league_total_scoring_avg"] == 160.0
 
 
 def rich_games():
