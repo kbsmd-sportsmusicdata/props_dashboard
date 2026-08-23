@@ -404,6 +404,7 @@ def build_live_model(player_games: pd.DataFrame, league_total_scoring_avg: float
         result[stat] = {
             "season_mean": float(values.mean()),
             "season_std": float(values.std(ddof=1)) if len(values) > 1 else 0.0,
+            "season_minutes_avg": float(player_games["minutes"].mean()),
             "games_played": int(len(values)),
             "historical_totals": values.tolist(),
             "team_scoring_avg": team_scoring_avg,

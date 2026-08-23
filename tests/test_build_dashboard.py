@@ -93,6 +93,17 @@ def test_production_template_has_live_scenario_controls_and_state_hooks():
     assert "Pregame hit rates" in html
 
 
+def test_invalid_live_scenario_restores_pregame_probability_surfaces():
+    html = Path("dashboard/dashboard_template.html").read_text()
+    invalid_branch = """if (!result?.active) {
+                liveScenario = null;
+                renderLiveScenarioState(result || { errors: ['Live scenario model is unavailable.'] });
+                updateProbabilities();
+                return;
+            }"""
+    assert invalid_branch in html
+
+
 def test_live_scenario_methodology_is_documented():
     methodology = Path("docs/ANALYTICS_METHODOLOGY.md").read_text()
     readme = Path("README.md").read_text()

@@ -41,7 +41,7 @@
     }
 
     function validLiveModel(model) {
-        const numericFields = ['season_mean', 'season_std', 'team_scoring_avg', 'league_total_scoring_avg'];
+        const numericFields = ['season_mean', 'season_std', 'season_minutes_avg', 'team_scoring_avg', 'league_total_scoring_avg'];
         return model
             && Array.isArray(model.historical_totals)
             && model.historical_totals.length > 0
@@ -102,7 +102,7 @@
             1.05,
         );
         const minuteMultiplier = scenario.playerMinutes && scenario.playerMinutes > 0
-            ? clamp((scenario.currentStat / scenario.playerMinutes) / (Number(model.season_mean) / 40 || 1), 0.85, 1.15)
+            ? clamp((scenario.currentStat / scenario.playerMinutes) / (Number(model.season_mean) / Number(model.season_minutes_avg) || 1), 0.85, 1.15)
             : 1;
         const contextMultiplier = paceMultiplier * marginMultiplier * minuteMultiplier;
         const adjustedRemainingMean = baseRemainingMean * contextMultiplier;

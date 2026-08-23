@@ -69,7 +69,7 @@ def validate_dashboard_payload(payload: dict) -> list[str]:
                     errors.append(f"player {pid} live_model {stat} historical_totals is empty")
                 if not isinstance(market.get("games_played"), int) or market["games_played"] <= 0:
                     errors.append(f"player {pid} live_model {stat} games_played is invalid")
-                for field in ("season_mean", "season_std", "team_scoring_avg", "league_total_scoring_avg"):
+                for field in ("season_mean", "season_std", "season_minutes_avg", "team_scoring_avg", "league_total_scoring_avg"):
                     if not _is_finite_number(market.get(field)):
                         errors.append(f"player {pid} live_model {stat} {field} is invalid")
     if not payload.get("metadata", {}).get("latest_completed_game_date"):

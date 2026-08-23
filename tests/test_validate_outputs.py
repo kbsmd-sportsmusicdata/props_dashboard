@@ -11,6 +11,7 @@ def live_model():
             "season_std": 2.0,
             "games_played": 2,
             "historical_totals": [8.0, 12.0],
+            "season_minutes_avg": 30.0,
             "team_scoring_avg": 80.0,
             "league_total_scoring_avg": 160.0,
         }

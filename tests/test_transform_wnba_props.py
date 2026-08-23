@@ -166,6 +166,7 @@ def test_live_model_uses_the_full_filtered_history_not_the_dashboard_tail():
     assert live["points"]["games_played"] == 6
     assert live["points"]["historical_totals"] == player_games["points"].astype(float).tolist()
     assert live["points"]["season_mean"] == pytest.approx(player_games["points"].mean())
+    assert live["points"]["season_minutes_avg"] == pytest.approx(player_games["minutes"].mean())
     assert live["points"]["team_scoring_avg"] == 80.0
     assert live["points"]["league_total_scoring_avg"] == 160.0
 

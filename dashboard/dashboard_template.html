@@ -904,7 +904,6 @@
 
         function getActiveProbability(pregameProbability) {
             if (!liveScenario) {
-                renderLiveScenarioState(null);
                 return pregameProbability;
             }
             const playerData = DATA.player_data[currentPlayerId];
@@ -925,6 +924,7 @@
             if (!result?.active) {
                 liveScenario = null;
                 renderLiveScenarioState(result || { errors: ['Live scenario model is unavailable.'] });
+                updateProbabilities();
                 return;
             }
             liveScenario = Object.fromEntries(Object.entries(rawScenario).map(([key, value]) => [key, Number(value)]));

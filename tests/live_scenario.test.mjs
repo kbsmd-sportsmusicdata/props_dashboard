@@ -6,6 +6,7 @@ const model = {
   season_std: 5,
   games_played: 6,
   historical_totals: [12, 15, 17, 18, 20, 26],
+  season_minutes_avg: 32,
   team_scoring_avg: 82,
   league_total_scoring_avg: 160,
 };
@@ -32,6 +33,15 @@ const alreadyOver = globalThis.LiveScenarioModel.calculate(model, {
   playerMinutes: 19,
 }, 15.5);
 assert.equal(alreadyOver.prob_ensemble, 1);
+
+const normalPerMinuteRate = globalThis.LiveScenarioModel.calculate(model, {
+  elapsedMinutes: 20,
+  currentStat: 9,
+  teamScore: 42,
+  opponentScore: 39,
+  playerMinutes: 16,
+}, 15.5);
+assert.equal(normalPerMinuteRate.minuteMultiplier, 1);
 
 const invalid = globalThis.LiveScenarioModel.calculate(model, {
   elapsedMinutes: 40,
