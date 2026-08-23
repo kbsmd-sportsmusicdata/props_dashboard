@@ -10,6 +10,8 @@ The latest validated dashboard is published through GitHub Pages from `site/inde
 
 When working from a checkout, open `site/index.html` (or the GitHub Pages URL). `dashboard/dashboard_template.html` is the source template and intentionally contains a data placeholder; it is not a populated dashboard until `build_dashboard.py` embeds the processed JSON.
 
+The dashboard also includes a manual live-game scenario panel: enter a player's current selected-market total, regulation time, both scores, and optional minutes to see a contextual remaining-game estimate. See the [methodology](docs/ANALYTICS_METHODOLOGY.md#live-game-scenarios) for its model and limitations.
+
 ## Local setup
 
 ```bash

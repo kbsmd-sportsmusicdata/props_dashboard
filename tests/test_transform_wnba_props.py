@@ -170,6 +170,15 @@ def test_live_model_uses_the_full_filtered_history_not_the_dashboard_tail():
     assert live["points"]["league_total_scoring_avg"] == 160.0
 
 
+def test_live_model_falls_back_to_aggregated_player_scores_without_final_score_columns():
+    games = rich_games()[rich_games()["athlete_id"] == 10].drop(columns=["team_score", "opponent_team_score"])
+
+    live = build_live_model(games, league_total_scoring_avg=None)
+
+    assert live["points"]["team_scoring_avg"] == pytest.approx(games.groupby("game_id")["points"].sum().mean())
+    assert live["points"]["league_total_scoring_avg"] == pytest.approx(live["points"]["team_scoring_avg"] * 2)
+
+
 def rich_games():
     rows = []
     for athlete_id, name, pos, starter in [(10, "Guard One", "G", True), (20, "Guard Two", "G", False), (30, "Center One", "C", True)]:

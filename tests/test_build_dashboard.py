@@ -91,3 +91,11 @@ def test_production_template_has_live_scenario_controls_and_state_hooks():
         assert f"function {hook}" in html
     assert "LIVE SCENARIO" in html
     assert "Pregame hit rates" in html
+
+
+def test_live_scenario_methodology_is_documented():
+    methodology = Path("docs/ANALYTICS_METHODOLOGY.md").read_text()
+    readme = Path("README.md").read_text()
+    assert "Live-game scenarios" in methodology
+    assert "regulation-only" in methodology
+    assert "manual live-game scenario" in readme

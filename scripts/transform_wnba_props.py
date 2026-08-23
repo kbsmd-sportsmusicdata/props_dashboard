@@ -390,8 +390,14 @@ def probability_table(games: pd.DataFrame, summary: pd.DataFrame) -> pd.DataFram
     return pd.DataFrame(records)
 
 
-def build_live_model(player_games: pd.DataFrame, league_total_scoring_avg: float) -> dict[str, dict]:
-    team_scores = player_games[["game_id", "team_score"]].drop_duplicates("game_id")["team_score"].astype(float)
+def build_live_model(player_games: pd.DataFrame, league_total_scoring_avg: float | None) -> dict[str, dict]:
+    if "team_score" in player_games.columns and player_games["team_score"].notna().any():
+        team_scores = player_games[["game_id", "team_score"]].dropna(subset=["team_score"]).drop_duplicates("game_id")["team_score"].astype(float)
+    else:
+        team_scores = player_games.groupby("game_id")["points"].sum().astype(float)
+    team_scoring_avg = float(team_scores.mean())
+    if league_total_scoring_avg is None or not math.isfinite(float(league_total_scoring_avg)) or float(league_total_scoring_avg) <= 0:
+        league_total_scoring_avg = team_scoring_avg * 2
     result: dict[str, dict] = {}
     for stat in STATS:
         values = player_games[stat].astype(float)
@@ -400,7 +406,7 @@ def build_live_model(player_games: pd.DataFrame, league_total_scoring_avg: float
             "season_std": float(values.std(ddof=1)) if len(values) > 1 else 0.0,
             "games_played": int(len(values)),
             "historical_totals": values.tolist(),
-            "team_scoring_avg": float(team_scores.mean()),
+            "team_scoring_avg": team_scoring_avg,
             "league_total_scoring_avg": float(league_total_scoring_avg),
         }
     return result
@@ -420,12 +426,22 @@ def build_payload(games: pd.DataFrame, summary: pd.DataFrame, probabilities: pd.
     players, player_data = [], {}
     position_percentiles, position_benchmarks = build_position_context(summary)
     schedule_context = build_schedule_context(schedule)
-    league_total_scoring_avg = float(
-        games[["game_id", "team_score", "opponent_team_score"]]
-        .drop_duplicates("game_id")
-        .assign(total=lambda frame: frame["team_score"].astype(float) + frame["opponent_team_score"].astype(float))["total"]
-        .mean()
-    )
+    if {"team_score", "opponent_team_score"}.issubset(games.columns):
+        league_total_scoring_avg = float(
+            games[["game_id", "team_score", "opponent_team_score"]]
+            .dropna(subset=["team_score", "opponent_team_score"])
+            .drop_duplicates("game_id")
+            .assign(total=lambda frame: frame["team_score"].astype(float) + frame["opponent_team_score"].astype(float))["total"]
+            .mean()
+        )
+    else:
+        team_totals = games.groupby(["game_id", "team_id"], dropna=False)["points"].sum()
+        teams_per_game = team_totals.groupby("game_id").size()
+        league_total_scoring_avg = float(
+            team_totals.groupby("game_id").sum().mean()
+            if (teams_per_game >= 2).all()
+            else team_totals.mean() * 2
+        )
     for _, row in select_dashboard_players(summary).iterrows():
         athlete_id = row["athlete_id"]
         pid = str(int(athlete_id) if float(athlete_id).is_integer() else athlete_id)
