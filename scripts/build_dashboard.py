@@ -10,9 +10,10 @@ from pathlib import Path
 
 
 PLACEHOLDER = "/*__DASHBOARD_DATA__*/"
+LIVE_SCENARIO_PLACEHOLDER = "/*__LIVE_SCENARIO__*/"
 
 
-def build_dashboard(template_path: Path, payload: dict, output_path: Path) -> None:
+def build_dashboard(template_path: Path, payload: dict, output_path: Path, live_script_path: Path | None = None) -> None:
     template = template_path.read_text(encoding="utf-8")
     placeholder_count = template.count(PLACEHOLDER)
     if placeholder_count != 1:
@@ -20,6 +21,18 @@ def build_dashboard(template_path: Path, payload: dict, output_path: Path) -> No
             f"dashboard template must contain exactly one {PLACEHOLDER}; found {placeholder_count}"
         )
     html = template.replace(PLACEHOLDER, json.dumps(payload, separators=(",", ":")))
+    live_placeholder_count = html.count(LIVE_SCENARIO_PLACEHOLDER)
+    if live_placeholder_count > 1:
+        raise ValueError(
+            f"dashboard template must contain at most one {LIVE_SCENARIO_PLACEHOLDER}; found {live_placeholder_count}"
+        )
+    if live_placeholder_count == 1:
+        source_path = live_script_path or template_path.parent / "live_scenario.js"
+        if not source_path.exists():
+            raise ValueError(f"live scenario source does not exist: {source_path}")
+        html = html.replace(LIVE_SCENARIO_PLACEHOLDER, source_path.read_text(encoding="utf-8"))
+    if LIVE_SCENARIO_PLACEHOLDER in html:
+        raise ValueError("live scenario placeholder remains after build")
     if "fetch(" in html:
         raise ValueError("standalone dashboard must not use fetch()")
     output_path.parent.mkdir(parents=True, exist_ok=True)
