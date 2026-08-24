@@ -19,6 +19,12 @@ For each player, stat, and half-point line:
 
 Model agreement determines the displayed confidence. These are descriptive estimates, not calibrated sportsbook prices.
 
+## Live-game scenarios
+
+The dashboard includes a manual live-game scenario panel for a selected player and market. Enter elapsed regulation time, the player's current selected-stat total, both scores, and optionally the player's minutes played. The panel estimates the remaining regulation outcome, then updates the empirical, Poisson, normal, and ensemble probabilities while retaining pregame hit rates as comparison context.
+
+The remaining-game estimate scales the historical mean and variance to time remaining. Current combined scoring applies a capped pace adjustment, the game margin applies a capped score-state adjustment, and optional player minutes compare the player's current per-minute production with her historical average per-minute production before applying a capped live-rate adjustment. These are transparent scenario inputs rather than a live forecasting feed. The model is regulation-only and does not include overtime, foul trouble, injuries, lineups, possessions, or sportsbook prices.
+
 ## Suggested lines and ranges
 
 The production target is the nearest half-point, with exact whole-number projections moved to the half below to avoid pushes. L5/L10/L20 quartiles describe recent distribution and volatility without allowing isolated outlier games to dominate the summary.

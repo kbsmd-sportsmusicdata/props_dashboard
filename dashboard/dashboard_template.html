@@ -166,6 +166,29 @@
             </div>
         </div>
 
+        <fieldset class="bg-card-bg rounded-xl p-4 mb-6 border border-card-border">
+            <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                <div>
+                    <legend class="font-semibold">LIVE GAME SCENARIO</legend>
+                    <p class="text-xs text-gray-500 mt-1">Manual regulation-only estimate. Score and optional minutes adjust the remaining-game forecast.</p>
+                </div>
+                <button id="liveScenarioReset" type="button" class="px-3 py-2 rounded text-sm font-medium cursor-pointer bg-dashboard-bg text-gray-400 border border-card-border">Reset to pregame</button>
+            </div>
+            <div class="grid grid-cols-1 md-grid-cols-5 gap-4">
+                <div><label for="liveGameState" class="block text-sm text-gray-400 mb-1">Game state</label><select id="liveGameState" class="w-full rounded-lg px-3 py-2 appearance-none pr-8 text-sm" aria-label="Live game state"><option value="">Choose game state</option><option value="10">End of Q1</option><option value="20">Halftime</option><option value="30">End of Q3</option><option value="custom">Custom elapsed minutes</option></select></div>
+                <div><label for="liveElapsedMinutes" class="block text-sm text-gray-400 mb-1">Elapsed minutes</label><input id="liveElapsedMinutes" type="number" min="0.1" max="39.9" step="0.1" disabled class="w-full rounded-lg px-3 py-2 text-sm" placeholder="Custom only"></div>
+                <div><label for="liveCurrentStat" id="liveCurrentStatLabel" class="block text-sm text-gray-400 mb-1">Live PTS</label><input id="liveCurrentStat" type="number" min="0" step="1" required class="w-full rounded-lg px-3 py-2 text-sm" placeholder="Current total"></div>
+                <div><label for="liveTeamScore" class="block text-sm text-gray-400 mb-1">Player team score</label><input id="liveTeamScore" type="number" min="0" step="1" required class="w-full rounded-lg px-3 py-2 text-sm" placeholder="Team score"></div>
+                <div><label for="liveOpponentScore" class="block text-sm text-gray-400 mb-1">Opponent score</label><input id="liveOpponentScore" type="number" min="0" step="1" required class="w-full rounded-lg px-3 py-2 text-sm" placeholder="Opponent score"></div>
+            </div>
+            <div class="flex items-end gap-4 mt-3 flex-wrap">
+                <div><label for="livePlayerMinutes" class="block text-sm text-gray-400 mb-1">Player minutes <span class="text-gray-500">(optional)</span></label><input id="livePlayerMinutes" type="number" min="0" max="39.9" step="0.1" class="rounded-lg px-3 py-2 text-sm" placeholder="Minutes played"></div>
+                <button id="liveScenarioApply" type="button" class="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer bg-accent text-white">Update live estimate</button>
+                <p id="liveScenarioStatus" class="text-sm text-gray-400" aria-live="polite"></p>
+            </div>
+            <p id="liveScenarioSummary" class="text-xs text-gray-500 mt-3"></p>
+        </fieldset>
+
         <!-- Main Grid -->
         <div class="grid grid-cols-1 lg-grid-cols-3 gap-6">
             <!-- Left Column -->
@@ -212,7 +235,7 @@
                         </div>
 
                         <div class="border-t border-card-border pt-4">
-                            <h3 class="text-sm font-semibold text-gray-400 mb-3">HIT RATES vs <span id="lineDisplay">18.5</span></h3>
+                            <h3 class="text-sm font-semibold text-gray-400 mb-3">Pregame hit rates vs <span id="lineDisplay">18.5</span></h3>
                             <div class="grid grid-cols-2 gap-3">
                                 <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">Season:</span><span class="font-semibold" id="hitSeason">-</span></div>
                                 <div class="flex justify-between items-center"><span class="text-gray-400 text-sm">L5:</span><span class="font-semibold" id="hitL5">-</span></div>
@@ -304,7 +327,7 @@
 
                 <!-- Probability Models -->
                 <div class="bg-card-bg rounded-xl p-5 border border-card-border">
-                    <h3 class="text-sm font-semibold text-gray-400 mb-4">PROBABILITY MODELS</h3>
+                    <div class="flex items-center justify-between gap-2 mb-4"><h3 class="text-sm font-semibold text-gray-400">PROBABILITY MODELS</h3><span id="liveScenarioBadge" class="hidden px-2 py-1 rounded text-xs font-semibold bg-yellow-500-20 text-yellow-500">LIVE SCENARIO</span></div>
                     <div class="space-y-3">
                         <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-400">Empirical</span><span class="font-medium" id="probEmpirical">-</span></div><div class="h-2 bg-dashboard-bg rounded-full overflow-hidden"><div class="prob-bar h-full bg-over rounded-full" id="probEmpiricalBar" style="width:50%"></div></div></div>
                         <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-400">Poisson</span><span class="font-medium" id="probPoisson">-</span></div><div class="h-2 bg-dashboard-bg rounded-full overflow-hidden"><div class="prob-bar h-full bg-over rounded-full" id="probPoissonBar" style="width:50%"></div></div></div>
@@ -410,6 +433,7 @@
     </div>
 
     <script id="dashboardPayload" type="application/json">/*__DASHBOARD_DATA__*/</script>
+    <script>/*__LIVE_SCENARIO__*/</script>
     <script>
         let DATA = null;
         let currentStat = 'points';
@@ -417,6 +441,7 @@
         let currentPlayerId = null;
         let currentOpponent = null;
         let gameDateFilter = 'all';
+        let liveScenario = null;
 
         const POSITION_LABELS = { 'Guard': 'Guards', 'Forward': 'Forwards', 'Center': 'Centers', 'Unknown': 'Players' };
 
@@ -590,6 +615,7 @@
             renderQuartiles();
             updateQuarterBreakdown(playerData);
             updateSuggestedLine();
+            updateLiveMarketLabel();
         }
 
         function populateGameDateFilter(playerData) {
@@ -842,26 +868,104 @@
             return closest;
         }
 
+        function updateLiveMarketLabel() {
+            const labels = { points: 'PTS', rebounds: 'REB', assists: 'AST', PRA: 'PRA' };
+            document.getElementById('liveCurrentStatLabel').textContent = `Live ${labels[currentStat]}`;
+        }
+
+        function getLiveScenarioInput() {
+            const gameState = document.getElementById('liveGameState').value;
+            const elapsedMinutes = gameState === 'custom'
+                ? document.getElementById('liveElapsedMinutes').value
+                : gameState;
+            return {
+                elapsedMinutes,
+                currentStat: document.getElementById('liveCurrentStat').value,
+                teamScore: document.getElementById('liveTeamScore').value,
+                opponentScore: document.getElementById('liveOpponentScore').value,
+                playerMinutes: document.getElementById('livePlayerMinutes').value,
+            };
+        }
+
+        function renderLiveScenarioState(result) {
+            const badge = document.getElementById('liveScenarioBadge');
+            const status = document.getElementById('liveScenarioStatus');
+            const summary = document.getElementById('liveScenarioSummary');
+            if (!result || !result.active) {
+                badge.classList.add('hidden');
+                status.textContent = result?.errors?.join(' ') || '';
+                summary.textContent = '';
+                return;
+            }
+            badge.classList.remove('hidden');
+            status.textContent = 'Live estimate active.';
+            summary.textContent = `Needs ${result.requiredRemaining} more in ${result.remainingMinutes.toFixed(1)} minutes · Score ${liveScenario.teamScore}-${liveScenario.opponentScore} · Remaining projection ${result.adjustedRemainingMean.toFixed(1)} · Pace ${result.paceMultiplier.toFixed(2)}× · Margin ${result.marginMultiplier.toFixed(2)}× · Minutes ${result.minuteMultiplier.toFixed(2)}×`;
+        }
+
+        function getActiveProbability(pregameProbability) {
+            if (!liveScenario) {
+                return pregameProbability;
+            }
+            const playerData = DATA.player_data[currentPlayerId];
+            const liveModel = playerData?.live_model?.[currentStat];
+            const result = window.LiveScenarioModel?.calculate(liveModel, liveScenario, currentLine);
+            if (!result?.active) {
+                renderLiveScenarioState(result);
+                return pregameProbability;
+            }
+            renderLiveScenarioState(result);
+            return { ...result, is_live: true };
+        }
+
+        function applyLiveScenario() {
+            const rawScenario = getLiveScenarioInput();
+            const playerData = DATA.player_data[currentPlayerId];
+            const result = window.LiveScenarioModel?.calculate(playerData?.live_model?.[currentStat], rawScenario, currentLine);
+            if (!result?.active) {
+                liveScenario = null;
+                renderLiveScenarioState(result || { errors: ['Live scenario model is unavailable.'] });
+                updateProbabilities();
+                return;
+            }
+            liveScenario = Object.fromEntries(Object.entries(rawScenario).map(([key, value]) => [key, Number(value)]));
+            updateProbabilities();
+        }
+
+        function resetLiveScenario() {
+            liveScenario = null;
+            document.getElementById('liveGameState').value = '';
+            document.getElementById('liveElapsedMinutes').value = '';
+            document.getElementById('liveElapsedMinutes').disabled = true;
+            document.getElementById('liveCurrentStat').value = '';
+            document.getElementById('liveTeamScore').value = '';
+            document.getElementById('liveOpponentScore').value = '';
+            document.getElementById('livePlayerMinutes').value = '';
+            renderLiveScenarioState(null);
+            updateProbabilities();
+        }
+
         function updateProbabilities() {
             const playerData = DATA.player_data[currentPlayerId];
             if (!playerData) return;
             const probs = playerData.probs[currentStat] || [];
-            const prob = findClosestProb(probs, currentLine);
-            if (!prob) return;
+            const pregameProb = findClosestProb(probs, currentLine);
+            if (!pregameProb) return;
 
             const formatPct = v => v != null ? (v*100).toFixed(1)+'%' : 'N/A';
             const colorClass = v => v != null && v > 0.5 ? 'text-over' : 'text-under';
 
-            document.getElementById('hitSeason').textContent = formatPct(prob.hit_rate);
-            document.getElementById('hitSeason').className = `font-semibold ${colorClass(prob.hit_rate)}`;
-            document.getElementById('hitL5').textContent = formatPct(prob.hit_rate_l5);
-            document.getElementById('hitL5').className = `font-semibold ${colorClass(prob.hit_rate_l5)}`;
-            document.getElementById('hitL10').textContent = formatPct(prob.hit_rate_l10);
-            document.getElementById('hitL10').className = `font-semibold ${colorClass(prob.hit_rate_l10)}`;
-            document.getElementById('hitHome').textContent = formatPct(prob.hit_rate_home);
-            document.getElementById('hitHome').className = `font-semibold ${colorClass(prob.hit_rate_home)}`;
-            document.getElementById('hitAway').textContent = formatPct(prob.hit_rate_away);
-            document.getElementById('hitAway').className = `font-semibold ${colorClass(prob.hit_rate_away)}`;
+            document.getElementById('hitSeason').textContent = formatPct(pregameProb.hit_rate);
+            document.getElementById('hitSeason').className = `font-semibold ${colorClass(pregameProb.hit_rate)}`;
+            document.getElementById('hitL5').textContent = formatPct(pregameProb.hit_rate_l5);
+            document.getElementById('hitL5').className = `font-semibold ${colorClass(pregameProb.hit_rate_l5)}`;
+            document.getElementById('hitL10').textContent = formatPct(pregameProb.hit_rate_l10);
+            document.getElementById('hitL10').className = `font-semibold ${colorClass(pregameProb.hit_rate_l10)}`;
+            document.getElementById('hitHome').textContent = formatPct(pregameProb.hit_rate_home);
+            document.getElementById('hitHome').className = `font-semibold ${colorClass(pregameProb.hit_rate_home)}`;
+            document.getElementById('hitAway').textContent = formatPct(pregameProb.hit_rate_away);
+            document.getElementById('hitAway').className = `font-semibold ${colorClass(pregameProb.hit_rate_away)}`;
+
+            const prob = getActiveProbability(pregameProb);
 
             const setProbBar = (id, barId, val) => {
                 document.getElementById(id).textContent = formatPct(val);
@@ -882,7 +986,7 @@
             edgeEl.className = `ml-2 px-2 py-1 rounded text-sm font-semibold ${prob.edge_direction==='OVER'?'bg-over-20 text-over':'bg-under-20 text-under'}`;
 
             const pe = prob.prob_ensemble || 0.5;
-            const implied = pe >= 0.5 ? `-${Math.round(pe/(1-pe)*100)}` : `+${Math.round((1-pe)/pe*100)}`;
+            const implied = pe >= 1 ? '-∞' : pe >= 0.5 ? `-${Math.round(pe/(1-pe)*100)}` : `+${Math.round((1-pe)/pe*100)}`;
             document.getElementById('impliedOdds').textContent = implied;
 
             updateRecommendation(prob);
@@ -902,8 +1006,9 @@
             const avg = currentStat==='points'?info?.ppg:currentStat==='rebounds'?info?.rpg:currentStat==='assists'?info?.apg:info?.pra;
 
             const items = [
+                ...(prob.is_live ? [{ good: prob.requiredRemaining === 0 || prob.prob_ensemble > 0.5, text: `Needs ${prob.requiredRemaining} more in ${prob.remainingMinutes.toFixed(1)} minutes` }] : []),
                 { good: avg > currentLine, text: `Avg (${avg}) ${avg>currentLine?'>':'<'} line` },
-                { good: prob.hit_rate > 0.5, text: `${((prob.hit_rate||0)*100).toFixed(0)}% hit rate` },
+                ...(prob.is_live ? [{ good: true, text: 'Pregame hit-rate context retained above' }] : [{ good: prob.hit_rate > 0.5, text: `${((prob.hit_rate||0)*100).toFixed(0)}% hit rate` }]),
                 { good: adv?.tournament_readiness >= 60, text: `Form index: ${adv?.tournament_readiness?.toFixed(0)||'N/A'}`, warn: adv?.tournament_readiness < 40 },
                 { good: currentOpponent.defense_tier==='Poor'||currentOpponent.defense_tier==='Below_Avg', text: `vs ${currentOpponent.defense_tier} D`, warn: currentOpponent.defense_tier==='Elite' }
             ];
@@ -1009,6 +1114,7 @@
                         updatePositionTab(playerData);
                         updateQuarterBreakdown(playerData);
                     }
+                    updateLiveMarketLabel();
                     renderBars(); updateProbabilities(); updateOpponentPanel();
                     renderQuartiles(); updateSuggestedLine();
                 });
@@ -1024,13 +1130,17 @@
             document.getElementById('opponentSelect').addEventListener('change', e => {
                 currentOpponent = DATA.teams.find(t => t.id == e.target.value);
                 updateOpponentPanel();
-                const playerData = DATA.player_data[currentPlayerId];
-                if (playerData) {
-                    const probs = playerData.probs[currentStat] || [];
-                    const prob = findClosestProb(probs, currentLine);
-                    if (prob) updateRecommendation(prob);
-                }
+                updateProbabilities();
             });
+
+            document.getElementById('liveGameState').addEventListener('change', e => {
+                const elapsed = document.getElementById('liveElapsedMinutes');
+                const custom = e.target.value === 'custom';
+                elapsed.disabled = !custom;
+                elapsed.value = custom ? '' : e.target.value;
+            });
+            document.getElementById('liveScenarioApply').addEventListener('click', applyLiveScenario);
+            document.getElementById('liveScenarioReset').addEventListener('click', resetLiveScenario);
 
             document.getElementById('gameDateFilter').addEventListener('change', e => {
                 gameDateFilter = e.target.value;

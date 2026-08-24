@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 from pathlib import Path
 
@@ -14,6 +15,13 @@ EXCLUDED_EVENT_PATTERN = re.compile(
     r"\b(?:TEAM\s+COOP|COOP|TEAM\s+SPOON|SPOON|SPO)\b",
     re.IGNORECASE,
 )
+
+
+def _is_finite_number(value) -> bool:
+    try:
+        return math.isfinite(float(value))
+    except (TypeError, ValueError):
+        return False
 
 
 def validate_dashboard_payload(payload: dict) -> list[str]:
@@ -47,9 +55,23 @@ def validate_dashboard_payload(payload: dict) -> list[str]:
         missing = REQUIRED_STATS - set(pdata.get("probs", {}))
         if missing:
             errors.append(f"player {pid} missing probability stats: {sorted(missing)}")
-        for section in ("advanced", "position_pctl", "starter_splits", "matchups", "quarter_breakdown"):
+        for section in ("advanced", "position_pctl", "starter_splits", "matchups", "quarter_breakdown", "live_model"):
             if not pdata.get(section):
                 errors.append(f"player {pid} {section} is empty")
+        live_model = pdata.get("live_model", {})
+        if live_model:
+            for stat in REQUIRED_STATS:
+                market = live_model.get(stat)
+                if not isinstance(market, dict):
+                    errors.append(f"player {pid} live_model missing {stat}")
+                    continue
+                if not isinstance(market.get("historical_totals"), list) or not market["historical_totals"]:
+                    errors.append(f"player {pid} live_model {stat} historical_totals is empty")
+                if not isinstance(market.get("games_played"), int) or market["games_played"] <= 0:
+                    errors.append(f"player {pid} live_model {stat} games_played is invalid")
+                for field in ("season_mean", "season_std", "season_minutes_avg", "team_scoring_avg", "league_total_scoring_avg"):
+                    if not _is_finite_number(market.get(field)):
+                        errors.append(f"player {pid} live_model {stat} {field} is invalid")
     if not payload.get("metadata", {}).get("latest_completed_game_date"):
         errors.append("missing latest completed game date")
     return errors

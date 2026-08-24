@@ -31,6 +31,7 @@ def test_production_template_uses_wnba_labels_schedule_controls_and_quarter_anal
     assert 'data-tab="quarters"' in html
     assert "QUARTER BREAKDOWN" in html
     assert "game-bar-wrap" in html
+    assert "/*__LIVE_SCENARIO__*/" in html
 
 
 def test_production_template_has_team_filter_and_grouped_sorted_players():
@@ -61,3 +62,51 @@ def test_dashboard_build_rejects_multiple_data_placeholders(tmp_path: Path):
 
     with pytest.raises(ValueError, match="exactly one"):
         build_dashboard(template, {"players": []}, tmp_path / "index.html")
+
+
+def test_dashboard_build_embeds_live_scenario_source(tmp_path: Path):
+    template = tmp_path / "template.html"
+    template.write_text(f"<script>{PLACEHOLDER}</script><script>/*__LIVE_SCENARIO__*/</script>")
+    live_source = tmp_path / "live_scenario.js"
+    live_source.write_text("globalThis.LiveScenarioModel = { calculate() {} };")
+    output = tmp_path / "index.html"
+
+    build_dashboard(template, {"players": []}, output, live_script_path=live_source)
+
+    html = output.read_text()
+    assert "/*__LIVE_SCENARIO__*/" not in html
+    assert "globalThis.LiveScenarioModel" in html
+    assert "fetch(" not in html
+
+
+def test_production_template_has_live_scenario_controls_and_state_hooks():
+    html = Path("dashboard/dashboard_template.html").read_text()
+    for control_id in (
+        "liveGameState", "liveElapsedMinutes", "liveCurrentStat", "liveTeamScore",
+        "liveOpponentScore", "livePlayerMinutes", "liveScenarioApply", "liveScenarioReset",
+        "liveScenarioStatus", "liveScenarioSummary", "liveScenarioBadge",
+    ):
+        assert f'id="{control_id}"' in html
+    for hook in ("applyLiveScenario", "resetLiveScenario", "renderLiveScenarioState", "getActiveProbability"):
+        assert f"function {hook}" in html
+    assert "LIVE SCENARIO" in html
+    assert "Pregame hit rates" in html
+
+
+def test_invalid_live_scenario_restores_pregame_probability_surfaces():
+    html = Path("dashboard/dashboard_template.html").read_text()
+    invalid_branch = """if (!result?.active) {
+                liveScenario = null;
+                renderLiveScenarioState(result || { errors: ['Live scenario model is unavailable.'] });
+                updateProbabilities();
+                return;
+            }"""
+    assert invalid_branch in html
+
+
+def test_live_scenario_methodology_is_documented():
+    methodology = Path("docs/ANALYTICS_METHODOLOGY.md").read_text()
+    readme = Path("README.md").read_text()
+    assert "Live-game scenarios" in methodology
+    assert "regulation-only" in methodology
+    assert "manual live-game scenario" in readme
