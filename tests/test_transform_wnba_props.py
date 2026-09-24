@@ -77,16 +77,22 @@ def test_dashboard_player_selection_includes_featured_players_beyond_limit_once(
         {"athlete_id": 2529137, "athlete_display_name": "Natasha Cloud", "pts_avg": 9.9},
         {"athlete_id": 3910470, "athlete_display_name": "Maria Conde", "pts_avg": 9.1},
         {"athlete_id": 4398729, "athlete_display_name": "Emily Engstler", "pts_avg": 9.2},
+        {"athlete_id": 5345320, "athlete_display_name": "Pauline Astier", "pts_avg": 8.9},
+        {"athlete_id": 4038379, "athlete_display_name": "Marine Johannes", "pts_avg": 8.8},
+        {"athlete_id": 3142250, "athlete_display_name": "Jordin Canada", "pts_avg": 8.7},
     ])
 
     selected = transform.select_dashboard_players(summary, limit=50)
 
-    assert len(selected) == 53
+    assert len(selected) == 56
     assert selected["athlete_id"].is_unique
     assert {
         "Natasha Cloud",
         "Maria Conde",
         "Emily Engstler",
+        "Pauline Astier",
+        "Marine Johannes",
+        "Jordin Canada",
     }.issubset(set(selected["athlete_display_name"]))
     assert "Player 51" not in set(selected["athlete_display_name"])
 
