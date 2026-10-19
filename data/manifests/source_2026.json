@@ -347,16 +347,17 @@
     "401918297",
     "401918298",
     "401918299",
-    "401918300"
+    "401918300",
+    "401918305"
   ],
   "files": {
-    "game_rosters_2026.parquet": "0fe442163504a54ffae78fce8b7fd8306791277a4b3c330a8ffd8e1ed03a8186",
-    "player_box_2026.parquet": "75c296341965c99d307a9452f80d2b2614203bc7804869486ae94c4eb0254526",
+    "game_rosters_2026.parquet": "b25214438a02251c92fcaeccbccea81b4abd7a1f05e7c88fb76a90d2e01cde50",
+    "player_box_2026.parquet": "7a8e4d3fce9a78ebfe2771bb1cc8bed665a6bb47b5c4472c804fb53b910a81a6",
     "player_season_stats_2026.parquet": "5d900ce8bdc54b8656f964d89959f5225f9b8ed31c1fb230a24320ca84c3f93e",
-    "schedule_2026.parquet": "02be3630a59b89359983d1c541a1d5e587fe3215cfd83f2df223b8d6225b12d7",
+    "schedule_2026.parquet": "3484c032b506fec8b9b17a124fa6a43d2abdd80dece07e52cba00d64e955b324",
     "standings_2026.parquet": "e45642c917e375cfdb593a4043172e71ca64acb97bcccbf9a24dcb50b301488e",
-    "team_box_2026.parquet": "87d3d3497eac5f85b736ff1b15c888e196cddb5d508096c8ca0960d564d89b5b"
+    "team_box_2026.parquet": "bdf159044b62a3b39338fb1ea12b8f48b5870be979187e990e6cdf1393ed0599"
   },
-  "latest_completed_game_date": "2026-10-09",
+  "latest_completed_game_date": "2026-10-17",
   "season": 2026
 }
