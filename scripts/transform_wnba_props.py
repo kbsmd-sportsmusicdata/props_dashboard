@@ -17,11 +17,15 @@ from scipy import stats
 STATS = ("points", "rebounds", "assists", "PRA")
 WINDOWS = (3, 5, 10, 20)
 DASHBOARD_FEATURED_ATHLETE_IDS = frozenset({
+    1054,
     2529137,
+    2590093,
     3142250,
     3910470,
     4038379,
     4398729,
+    4398915,
+    4398935,
     5345320,
 })
 PROP_LINES = {
